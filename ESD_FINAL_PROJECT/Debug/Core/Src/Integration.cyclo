@@ -1,0 +1,3 @@
+../Core/Src/Integration.c:27:6:init_game	1
+../Core/Src/Integration.c:41:6:spawn_pokemon_from_array	1
+../Core/Src/Integration.c:48:6:game_state_machine	9

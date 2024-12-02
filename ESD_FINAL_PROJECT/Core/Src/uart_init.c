@@ -1,46 +1,28 @@
-/*
- * uart_init.c
- *
- *  Created on: Nov 4, 2024
- *      Author: karth
- */
-
 #include "uart_init.h"
-// UART initialization
-#define SYSTEM_CLOCK 16000000
-#define BAUD_RATE 9600
-volatile uint8_t tx_complete = 1;
-void UART_Init(void) {
-    RCC->APB1ENR |= RCC_APB1ENR_USART2EN;  // Enable USART2 clock
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;   // Enable GPIOA clock
 
-    // Configure GPIOA PA2 and PA3 for USART2 TX and RX
-    GPIOA->MODER &= ~((3 << (2 * 2)) | (3 << (3 * 2)));
-    GPIOA->MODER |= (2 << (2 * 2)) | (2 << (3 * 2));
-    GPIOA->AFR[0] |= (7 << (2 * 4)) | (7 << (3 * 4));
 
-    USART2->BRR = (SYSTEM_CLOCK / BAUD_RATE);     // Set baud rate (assuming 16 MHz clock)
-    USART2->CR1 |= USART_CR1_TE | USART_CR1_RE;   // Enable TX and RX
-    USART2->CR1 |= USART_CR1_RXNEIE;              // Enable RX interrupt
-    USART2->CR1 |= USART_CR1_UE;                  // Enable USART2
+void pin_init(void)
+{
+// Enable the USART2 and GPIOA clocks
+RCC->APB1ENR |= RCC_APB1ENR_USART2EN;  // Enable UART2 clock
+RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;   // Enable GPIOA clock
 
-    NVIC_EnableIRQ(USART2_IRQn);                  // Enable USART2 interrupt in NVIC
+// Configure GPIOA pins PA2 and PA3 for USART2 TX and RX functionality
+GPIOA->MODER &= ~((3 << (2 * 2)) | (3 << (3 * 2))); // Clear mode for PA2, PA3
+GPIOA->MODER |= (2 << (2 * 2)) | (2 << (3 * 2));    // Set PA2, PA3 to Alternate Function mode
+GPIOA->AFR[0] |= (7 << (2 * 4)) | (7 << (3 * 4));   // Set AF7 (UART2) for PA2, PA3
+
+// Configure USART2 for 9600 baud rate, 8 data bits, no parity, 1 stop bit
+USART2->BRR = (24000000 / 9600);                    // Set baud rate (assuming 16 MHz clock)
+USART2->CR1 |= USART_CR1_TE | USART_CR1_RE;         // Enable USART TX and RX
+USART2->CR1 |= USART_CR1_RXNEIE;                    // Enable RX interrupt
+USART2->CR1 |= USART_CR1_UE;                        // Enable UART2
+
+// Enable USART2 interrupt in the NVIC
+NVIC_EnableIRQ(USART2_IRQn);
 }
-//void USARTx_IRQHandler(void) {
-//    if (USART1->SR & USART_SR_TXE) {  // Check if the TXE flag is set
-//        if (!tx_complete) {  // Check if there's data left to send
-//            USART1->DR = 'D';  // Example: Sending character 'D'
-//            tx_complete = 1;  // Update flag indicating data has been sent
-//        } else {
-//            // Disable the TXE interrupt to stop sending
-//            USART1->CR1 &= ~USART_CR1_TXEIE;
-//        }
-//    }
-//
-//    if (USART1->SR & USART_SR_TC) {  // Check if the TC flag is set
-//        USART1->SR &= ~USART_SR_TC;  // Clear the TC flag
-//    }
-//}
+
+// USART2 interrupt handler
 void USART2_IRQHandler(void) {
     if (USART2->SR & USART_SR_RXNE) {  // RX interrupt triggered
         char received = USART2->DR;    // Read received character
@@ -50,10 +32,10 @@ void USART2_IRQHandler(void) {
         USART2->DR = received;         // Transmit received character back
     }
 }
+
 void uart_send_string(const char *str) {
     while (*str) {
         while (!(USART2->SR & USART_SR_TXE)); // Wait until TX is ready
         USART2->DR = *str++;                  // Transmit character
     }
 }
-
