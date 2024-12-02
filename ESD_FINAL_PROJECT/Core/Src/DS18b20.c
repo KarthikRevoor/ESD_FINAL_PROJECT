@@ -1,5 +1,5 @@
 #include "DS18b20.h"
-
+#include "main.h"
 int presence=0, is_received=0;
 uint8_t receive_data[8], temp_lsb=0, temp_msb=0;
 uint16_t temp;
@@ -48,6 +48,7 @@ int temp_write(uint8_t data)
 		}
 	}
 	HAL_UART_Transmit(&huart1,buffer,8,1000);
+	return 0;
 }
 
 int temp_read(void)

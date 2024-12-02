@@ -24,18 +24,20 @@ const char *water_pokemon[POKEMON_COUNT] = {
     "Vaporeon", "Lapras", "Poliwag", "Wooper", "Marill"
 };
 
-void init_game() {
-    // Initialize the IR sensor with interrupts
-    IR_init();
+void init_game(void) {
+	IR_init();
+    // Initialize sensors
 
-    // Initialize UART for debugging and communication
-    pin_init();
 
-    // Print a message to indicate the game has been initialized
-    uart_send_string("Game initialized. Waiting for object detection...\n\r");
-
-    // Set the initial game state to IDLE
+    // Initialize game state
     currentState = IDLE;
+
+    // Debugging output
+    uart_send_string("Game initialized. System ready!\n");
+    //MPU_init();
+
+    // Additional setup for game variables (if needed)
+    // Example: Initialize Pokémon health, score, or other gameplay elements
 }
 
 void spawn_pokemon_from_array(const char *pokemon_array[]) {
@@ -49,6 +51,7 @@ void game_state_machine() {
     switch (currentState) {
         case IDLE:
             // Wait for IR sensor trigger
+        	ir_triggered=0;
             if (IR_is_triggered()) {
                 uart_send_string("Object detected! Moving to SENSOR_READ.\n\r");
                 currentState = SENSOR_READ;
@@ -94,10 +97,27 @@ void game_state_machine() {
             break;
 
 
-        case BATTLE:
-            uart_send_string("Battle initiated! Fighting...\n\r");
+        case BATTLE: {
+            uart_send_string("Battle initiated! Shake the board to attack.\n");
+
+            // Detect shakes for 3 seconds
+            const uint32_t duration = 3000; // 3 seconds
+            const int threshold = 2000;    // Acceleration threshold
+            uint32_t shake_count = detect_shakes(duration, threshold);
+
+            // Calculate damage
+            int base_damage = 10;
+            int total_damage = shake_count * base_damage;
+
+            // Output result
+            char buffer[100];
+            sprintf(buffer, "Shake count: %lu, Total damage: %d\n", shake_count, total_damage);
+            uart_send_string(buffer);
+
+            uart_send_string("Battle concluded. Returning to IDLE.\n");
             currentState = POST_BATTLE;
             break;
+        }
 
         case POST_BATTLE:
             uart_send_string("Battle concluded. Returning to IDLE.\n\r");

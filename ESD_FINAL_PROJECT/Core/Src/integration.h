@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "IRSensor.h"
 #include "DHT11.h"
+#include "accelerometer.h"
 
 void init_game();
 void game_state_machine();

@@ -18,7 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "accelerometer.h"
+#include "DS18b20.h"
+#include "integration.h"
+#include "IRSensor.h"
+#include "uart_init.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -74,7 +78,7 @@ static void MX_I2C1_Init(void);
   */
 int main(void)
 {
-
+pin_init();
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -101,6 +105,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_SPI2_Init();
   MX_I2C1_Init();
+  init_game();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -110,7 +115,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  game_state_machine();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

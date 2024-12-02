@@ -1,6 +1,6 @@
 ../Core/Src/DS18b20.c:7:6:temp_uart	2
 ../Core/Src/DS18b20.c:23:5:temp_start	3
 ../Core/Src/DS18b20.c:36:5:temp_write	3
-../Core/Src/DS18b20.c:53:5:temp_read	5
-../Core/Src/DS18b20.c:79:6:HAL_UART_RxCpltCallback	1
-../Core/Src/DS18b20.c:84:6:temp_sensor_check	1
+../Core/Src/DS18b20.c:54:5:temp_read	5
+../Core/Src/DS18b20.c:80:6:HAL_UART_RxCpltCallback	1
+../Core/Src/DS18b20.c:85:6:temp_sensor_check	1

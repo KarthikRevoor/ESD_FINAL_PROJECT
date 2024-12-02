@@ -1,0 +1,8 @@
+../Drivers/CMSIS/Include/core_cm4.h:1684:22:__NVIC_EnableIRQ	2
+../Drivers/CMSIS/Include/core_cm4.h:1814:22:__NVIC_SetPriority	2
+../Core/Src/accelerometer.c:6:6:MPU_INT_Pin_Init	1
+../Core/Src/accelerometer.c:33:6:handle_accelerometer_interrupt	3
+../Core/Src/accelerometer.c:48:6:MPU_init	5
+../Core/Src/accelerometer.c:89:9:read_axis_data	1
+../Core/Src/accelerometer.c:93:9:MPU_read	2
+../Core/Src/accelerometer.c:116:10:detect_shakes	3
