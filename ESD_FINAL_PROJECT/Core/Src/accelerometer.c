@@ -29,22 +29,6 @@ void MPU_INT_Pin_Init(void) {
     NVIC_EnableIRQ(EXTI9_5_IRQn);      // Enable EXTI9_5 interrupt
 }
 
-// EXTI interrupt handler for PB7 (EXTI Line 7)
-void handle_accelerometer_interrupt(void) {
-    if (EXTI->PR & EXTI_PR_PR7) {  // Check if EXTI Line 7 triggered
-        EXTI->PR |= EXTI_PR_PR7;   // Clear pending interrupt
-
-        // Read and process accelerometer data
-        int32_t magnitude = MPU_read();
-        const int threshold = 2000;
-
-        if (magnitude > threshold) {
-            // Increment shake count or take action
-            uart_send_string("Shake detected via interrupt!\n\r");
-        }
-    }
-}
-
 void MPU_init(void)
 {
 HAL_StatusTypeDef ret = HAL_I2C_IsDeviceReady(&hi2c1, (DEV_ADD <<1)+0, 1, 100);
@@ -73,7 +57,7 @@ ret = HAL_I2C_Mem_Write(&hi2c1, (DEV_ADD <<1)+0, REG_CONFIG_ACC, 1, &temp_data, 
   else
 	  uart_send_string("not ready\n\r");
 
-temp_data = 0x00;
+temp_data = 0;
 ret = HAL_I2C_Mem_Write(&hi2c1, (DEV_ADD <<1)+0, REG_USR_CTRL, 1, &temp_data, 1, 100);
   if(ret ==HAL_OK)
   {
@@ -82,7 +66,6 @@ ret = HAL_I2C_Mem_Write(&hi2c1, (DEV_ADD <<1)+0, REG_USR_CTRL, 1, &temp_data, 1,
   else
 	  uart_send_string("not ready\n\r");
 
-  MPU_INT_Pin_Init();
 }
 
 
@@ -97,7 +80,7 @@ int32_t MPU_read() {
     // Read 2 bytes of accelerometer data (X-axis only)
     HAL_StatusTypeDef status = HAL_I2C_Mem_Read(&hi2c1, (DEV_ADD << 1), REG_DATA, 1, data, 2, 100);
     if (status != HAL_OK) {
-        uart_send_string("Error: Failed to read accelerometer data\n");
+        uart_send_string("Error: Failed to read accelerometer data\n\r");
         return -1; // Error reading data
     }
 
@@ -105,8 +88,6 @@ int32_t MPU_read() {
     x_acc = ((int16_t)data[0] << 8) | data[1];
 
     // Debug: Print raw X-axis value
-    char buffer[50];
-    uart_send_string(buffer);
 
     // Return the absolute value of X-axis acceleration
     return abs(x_acc);

@@ -9,3 +9,5 @@ void ADC_Read(void);
 void ADC_IRQHandler(void);
 void ADC_Config(void);
 void Pressure_sensor_Init(void);
+
+extern volatile uint16_t adcValue;

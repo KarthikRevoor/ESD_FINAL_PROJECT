@@ -1,8 +1,7 @@
 ../Drivers/CMSIS/Include/core_cm4.h:1684:22:__NVIC_EnableIRQ	16	static,ignoring_inline_asm
 ../Drivers/CMSIS/Include/core_cm4.h:1814:22:__NVIC_SetPriority	16	static
 ../Core/Src/accelerometer.c:6:6:MPU_INT_Pin_Init	8	static
-../Core/Src/accelerometer.c:33:6:handle_accelerometer_interrupt	16	static
-../Core/Src/accelerometer.c:48:6:MPU_init	32	static
-../Core/Src/accelerometer.c:89:9:read_axis_data	16	static
-../Core/Src/accelerometer.c:93:9:MPU_read	88	static
-../Core/Src/accelerometer.c:116:10:detect_shakes	32	static
+../Core/Src/accelerometer.c:32:6:MPU_init	32	static
+../Core/Src/accelerometer.c:72:9:read_axis_data	16	static
+../Core/Src/accelerometer.c:76:9:MPU_read	32	static
+../Core/Src/accelerometer.c:97:10:detect_shakes	32	static

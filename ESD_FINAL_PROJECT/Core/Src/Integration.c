@@ -4,7 +4,9 @@ typedef enum {
     IDLE,
     SENSOR_READ,
     CHECK_POKEMON_ENCOUNTER,
+    SELECT_ACTION,
     BATTLE,
+    CAPTURE,
     POST_BATTLE
 } GameState;
 
@@ -28,13 +30,15 @@ void init_game(void) {
 	IR_init();
     // Initialize sensors
 
-
+	//MPU_init();
+    Push_Button_Init(); // Initialize push button
+    Pressure_sensor_Init();
+    ADC_Config();
     // Initialize game state
     currentState = IDLE;
 
     // Debugging output
-    uart_send_string("Game initialized. System ready!\n");
-    //MPU_init();
+    uart_send_string("Game initialized. System ready!\n\r");
 
     // Additional setup for game variables (if needed)
     // Example: Initialize Pokémon health, score, or other gameplay elements
@@ -66,7 +70,7 @@ void game_state_machine() {
             dht11_humidity = (int)DHT_Data.Humidity;
 
             // Read temperature from DS18B20
-            //temp_sensor_check(); // Reads DS18B20 temperature
+            //temp_sensor_check();
             ds18b20_temperature = temperature;
 
             // Debug output for humidity and temperature
@@ -93,12 +97,36 @@ void game_state_machine() {
                 // Spawn a Normal-type Pokémon by default
                 spawn_pokemon_from_array(normal_pokemon);
             }
-            currentState = BATTLE;
+            uart_send_string("\rSelect an action: Press button for Battle or Capture.\n\r");
+            Reset_Button_State(); // Reset button state for selection
+            currentState = SELECT_ACTION;
             break;
 
+        case SELECT_ACTION: {
+            uart_send_string("\rWaiting for button press: Battle or Capture.\n\r");
+
+            uint32_t start_time = HAL_GetTick(); // Get the start time
+            uint8_t action_decided = 0;
+
+            // Wait for a decision
+            while (!action_decided && (HAL_GetTick() - start_time < 5000)) { // 5-second timeout
+                if (Get_Button_State()) {
+                    uart_send_string("Battle selected!\n\r");
+                    currentState = BATTLE;
+                    action_decided = 1;
+                }
+            }
+
+            // If no button press within timeout, select Capture
+            if (!action_decided) {
+            	uart_send_string("Capture selected! Press gently to capture the Pokémon.\n\r");
+            	        currentState = CAPTURE; // Transition to CAPTURE state
+            	    }
+            	    break;
+        }
 
         case BATTLE: {
-            uart_send_string("Battle initiated! Shake the board to attack.\n");
+            uart_send_string("Battle initiated! Shake the board to attack.\n\r");
 
             // Detect shakes for 3 seconds
             const uint32_t duration = 3000; // 3 seconds
@@ -109,19 +137,74 @@ void game_state_machine() {
             int base_damage = 10;
             int total_damage = shake_count * base_damage;
 
-            // Output result
+            // Debug output for shake count and damage
             char buffer[100];
-            sprintf(buffer, "Shake count: %lu, Total damage: %d\n", shake_count, total_damage);
+            if (shake_count > 0) {
+                sprintf(buffer, "Shake count: %lu, Total damage: %d\n\r", shake_count, total_damage);
+            } else {
+                sprintf(buffer, "No shakes detected. Total damage: %d\n\r", total_damage);
+            }
             uart_send_string(buffer);
 
-            uart_send_string("Battle concluded. Returning to IDLE.\n");
-            currentState = POST_BATTLE;
+            uart_send_string("Returning to action selection.\n\r");
+            Reset_Button_State(); // Reset button state for new selection
+            currentState = SELECT_ACTION; // Return to action selection
             break;
         }
+        case CAPTURE: {
+                    uart_send_string("Apply pressure to capture the Pokémon...\n\r");
 
-        case POST_BATTLE:
-            uart_send_string("Battle concluded. Returning to IDLE.\n\r");
-            currentState = IDLE;
-            break;
-    }
+
+
+                    // Countdown for pressing the button
+                    for (int countdown = 3; countdown > 0; countdown--) {
+                        char buffer[50];
+                        sprintf(buffer, "Press in: %d\n\r", countdown);
+
+
+                        uart_send_string(buffer);
+                        HAL_Delay(1000); // 1-second delay for countdown
+                    }
+
+                    uart_send_string("Apply pressure now for 2 seconds...\n\r");
+
+
+
+                    // Read ADC value and calculate average over 2 seconds
+                    uint32_t start_time = HAL_GetTick();
+                    uint32_t total_value = 0;
+                    uint32_t samples = 0;
+
+                    while ((HAL_GetTick() - start_time) < 2000) { // 2-second window
+                        ADC_Read(); // Update global adcValue
+                        total_value += adcValue;
+                        samples++;
+                        HAL_Delay(100); // Sample every 100ms
+                    }
+
+                    uint32_t avg_value = total_value / samples;
+
+                    // Check if average pressure is within threshold
+                    char buffer[100];
+                    if (avg_value > 200 && avg_value < 800) {
+                        sprintf(buffer, "Success! Pokémon captured with average pressure: %lu \n\r", avg_value);
+                        uart_send_string(buffer);
+                    } else {
+                        sprintf(buffer, "Failed! Pokémon broke out. Average pressure: %lu \n\r", avg_value);
+
+
+                        uart_send_string(buffer);
+                    }
+
+                    currentState = IDLE; // Return to IDLE after capture attempt
+                    break;
+                }
+
+
+               case POST_BATTLE:
+                   uart_send_string("Battle concluded. Returning to IDLE.\n\r");
+                   currentState = IDLE;
+                   break;
+           }
 }
+
