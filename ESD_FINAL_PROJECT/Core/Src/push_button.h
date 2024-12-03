@@ -12,5 +12,6 @@
 void Push_Button_Init(void);
 uint8_t Get_Button_State(void);
 void Reset_Button_State(void);
-
+uint8_t Get_Capture_Button_State(void);
+uint8_t Get_Battle_Button_State(void);
 #endif /* SRC_PUSH_BUTTON_H_ */

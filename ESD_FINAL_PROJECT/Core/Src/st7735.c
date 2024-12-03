@@ -34,7 +34,7 @@ static const uint8_t
       0x00,                   //     Boost frequency
     ST7735_PWCTR4 , 2      ,  // 10: Power control, 2 args, no delay:
       0x8A,                   //     BCLK/2, Opamp current small & Medium low
-      0x2A,
+      0x2A,  
     ST7735_PWCTR5 , 2      ,  // 11: Power control, 2 args, no delay:
       0x8A, 0xEE,
     ST7735_VMCTR1 , 1      ,  // 12: Power control, 1 arg, no delay:
@@ -48,9 +48,12 @@ static const uint8_t
 #if (defined(ST7735_IS_128X128) || defined(ST7735_IS_160X128))
   init_cmds2[] = {            // Init for 7735R, part 2 (1.44" display)
     2,                        //  2 commands in list:
-	ST7735_CASET, 4, 0x00, 0x00, 0x00, 0xEF, // Column Address: 0-239
-	    ST7735_RASET, 4, 0x00, 0x00, 0x01, 0x3F  // Page Address: 0-319
-	},           //     XEND = 127
+    ST7735_CASET  , 4      ,  //  1: Column addr set, 4 args, no delay:
+      0x00, 0x00,             //     XSTART = 0
+      0x00, 0x7F,             //     XEND = 127
+    ST7735_RASET  , 4      ,  //  2: Row addr set, 4 args, no delay:
+      0x00, 0x00,             //     XSTART = 0
+      0x00, 0x7F },           //     XEND = 127
 #endif // ST7735_IS_128X128
 
 #ifdef ST7735_IS_160X80
@@ -200,7 +203,7 @@ static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint
         for(j = 0; j < font.width; j++) {
             if((b << j) & 0x8000)  {
                 ST7735_DrawPixel(x + j, y + i, color);
-            }
+            } 
         }
     }
 }

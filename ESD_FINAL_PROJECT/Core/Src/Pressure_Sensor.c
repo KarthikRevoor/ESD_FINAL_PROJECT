@@ -50,30 +50,4 @@ void ADC_Read(void) {
     // Wait for conversion to complete
 }
 
-void ADC_Output(void)
-{
-	ADC_Read();
-    char buffer[50]; // Buffer for formatted string
-
-    // Format the string with the ADC value
-    sprintf(buffer, "adcval: %d\n\r", adcValue);
-    uart_send_string(buffer);
-
-	        // Transmit ADC value and corresponding touch leve
-
-	        if (adcValue < 10) {
-	        	uart_send_string("- No pressure\n\r");
-	        } else if (adcValue < 200) {
-	        	uart_send_string("- Light touch\n\r");
-	        } else if (adcValue < 500) {
-	        	uart_send_string("- Light squeeze\n\r");
-	        } else if (adcValue < 800) {
-	        	uart_send_string("- Medium squeeze\n\r");
-	        } else {
-	        	uart_send_string("- Hard touch\n\r");
-	        }
-
-	        HAL_Delay(1000); // Delay 1 second for readability
-	    }
-
 extern void SystemClock_Config(void);
