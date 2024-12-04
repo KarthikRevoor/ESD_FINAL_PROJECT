@@ -31,7 +31,14 @@ Core/Src/Integration.o: ../Core/Src/Integration.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
  ../Core/Src/IRSensor.h ../Core/Src/uart_init.h ../Core/Src/DHT11.h \
  ../Core/Src/accelerometer.h ../Core/Src/push_button.h \
- ../Core/Src/Pressure_Sensor.h
+ ../Core/Src/Pressure_Sensor.h ../Core/Src/lcd_functions.h \
+ ../Core/Src/lcd.h ../FATFS/App/fatfs.h \
+ ../Middlewares/Third_Party/FatFs/src/ff.h \
+ ../Middlewares/Third_Party/FatFs/src/integer.h ../FATFS/Target/ffconf.h \
+ ../Core/Inc/main.h ../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h \
+ ../Middlewares/Third_Party/FatFs/src/diskio.h \
+ ../Middlewares/Third_Party/FatFs/src/ff.h ../FATFS/Target/user_diskio.h \
+ ../Core/Inc/fonts.h ../Core/Src/gfxfont.h
 ../Core/Src/integration.h:
 ../Core/Src/DS18b20.h:
 ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h:
@@ -69,3 +76,16 @@ Core/Src/Integration.o: ../Core/Src/Integration.c \
 ../Core/Src/accelerometer.h:
 ../Core/Src/push_button.h:
 ../Core/Src/Pressure_Sensor.h:
+../Core/Src/lcd_functions.h:
+../Core/Src/lcd.h:
+../FATFS/App/fatfs.h:
+../Middlewares/Third_Party/FatFs/src/ff.h:
+../Middlewares/Third_Party/FatFs/src/integer.h:
+../FATFS/Target/ffconf.h:
+../Core/Inc/main.h:
+../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h:
+../Middlewares/Third_Party/FatFs/src/diskio.h:
+../Middlewares/Third_Party/FatFs/src/ff.h:
+../FATFS/Target/user_diskio.h:
+../Core/Inc/fonts.h:
+../Core/Src/gfxfont.h:

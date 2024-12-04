@@ -1,18 +1,10 @@
 /* vim: set ai et ts=4 sw=4: */
-#ifndef __FONTS_H__
-#define __FONTS_H__
-
 #include <stdint.h>
+#include "stm32f4xx.h" // Adjust based on the specific STM32 series
+#include "core_cm4.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include "stm32f4xx_hal.h"
 
-typedef struct {
-    const uint8_t width;
-    uint8_t height;
-    const uint16_t *data;
-} FontDef;
-
-
-extern FontDef Font_7x10;
-extern FontDef Font_11x18;
-extern FontDef Font_16x26;
-
-#endif // __FONTS_H__
+extern const uint8_t font5x7[96][7];

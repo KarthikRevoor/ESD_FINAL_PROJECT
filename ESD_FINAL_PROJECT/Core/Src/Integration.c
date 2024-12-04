@@ -1,5 +1,6 @@
 #include "integration.h"
-
+#include "lcd_functions.h"
+#include "lcd.h"
 typedef enum {
     IDLE,
     SENSOR_READ,
@@ -56,15 +57,19 @@ void spawn_pokemon_from_array(const char *pokemon_array[]) {
 void game_state_machine() {
     switch (currentState) {
         case IDLE:
+            //DrawString(10, 10, "Welcome to Pokemon Adventure!", 0xFFFF, 0x0000,2);
+            //DrawString(10, 30, "Wave your hand to start!", 0xFFFF, 0x0000,2);
             // Wait for IR sensor trigger
         	ir_triggered=0;
             if (IR_is_triggered()) {
                 uart_send_string("Pokemon detected! Moving to SENSOR_READ.\n\r");
                 currentState = SENSOR_READ;
+                ILI9341_FillScreen(0x0000);
             }
             break;
 
         case SENSOR_READ: {
+        	ILI9341_FillRect(10, 30, 100, 50, 0x07E0);
             DHT_DataTypedef DHT_Data;
             DHT_GetData(&DHT_Data); // Read DHT11 data
 
@@ -78,10 +83,12 @@ void game_state_machine() {
             // Debug output for humidity and temperature
             char buffer[100];
             sprintf(buffer, "DHT11 Humidity: %d%%\n\r", dht11_humidity);
-            uart_send_string(buffer);
+            DrawString(10, 30, buffer, 0xFFFF, 0x0000,1);
+            //uart_send_string(buffer);
 
             sprintf(buffer, "DS18B20 Temperature: %.2f°C\n\r", ds18b20_temperature);
-            uart_send_string(buffer);
+            DrawString(10, 50, buffer, 0xFFFF, 0x0000,1);
+            //uart_send_string(buffer);
 
             currentState = CHECK_POKEMON_ENCOUNTER;
             break;
@@ -149,6 +156,7 @@ void game_state_machine() {
             uart_send_string("\rSelect an action: Press button for Battle or Capture.\n\r");
             Reset_Button_State(); // Reset button state for new selection
             currentState = SELECT_ACTION; // Return to action selection
+
             break;
         }
         case CAPTURE: {
@@ -196,6 +204,7 @@ void game_state_machine() {
             }
 
 
+
             break;
         }
 
@@ -204,5 +213,6 @@ void game_state_machine() {
                    currentState = IDLE;
                    break;
            }
-}
+	}
+
 
