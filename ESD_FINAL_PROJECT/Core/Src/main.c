@@ -19,13 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "fatfs.h"
+#include "lcd.h"
 #include <stdio.h>
 #include <string.h>
 #include "uart_init.h"
 #include "FATFS_SD.h"
 #include "stdbool.h"
-#include "lcd.h"
-
+#include "lcd_functions.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -112,9 +112,11 @@ int main(void)
   MX_I2C1_Init();
   MX_FATFS_Init();
   MX_USART2_UART_Init();
-  ILI9341_Init();
   /* USER CODE BEGIN 2 */
+  ILI9341_Init();
+  ILI9341_FillScreen(0x0321);
   process_SD_card();
+  DrawString(10, 10, "New Screen Content", 0xFFFF, 0x0000,1);
   // Draw a single character
   // Draw 'A' with double size
 
@@ -229,7 +231,7 @@ static void MX_SPI2_Init(void)
   /* SPI2 parameter configuration*/
   hspi2.Instance = SPI2;
   hspi2.Init.Mode = SPI_MODE_MASTER;
-  hspi2.Init.Direction = SPI_DIRECTION_1LINE;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
   hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
@@ -504,6 +506,7 @@ int fputc(int ch, FILE *f)
   return ch;
 }
 /* USER CODE BEGIN 4 */
+/* USER CODE BEGIN 4 */
 /* USER CODE END 4 */
 void process_SD_card( void )
 {
@@ -579,12 +582,6 @@ void process_SD_card( void )
   f_mount(NULL, "", 0);
   printf("SD Card Unmounted Successfully!!!\r\n");
 }
-/* USER CODE END 4 */
-
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
 /* USER CODE END 4 */
 
 /**

@@ -3,8 +3,3 @@
 ../Core/Src/lcd.c:30:6:ILI9341_SendDataByte	16	static
 ../Core/Src/lcd.c:38:6:ILI9341_Init	24	static
 ../Core/Src/lcd.c:126:6:ILI9341_FillScreen	32	static
-../Core/Src/lcd.c:149:6:SD_Select	8	static
-../Core/Src/lcd.c:153:6:SD_Deselect	8	static
-../Core/Src/lcd.c:157:6:SPI_SD_Init	8	static
-../Core/Src/lcd.c:161:6:init_system	16	static
-../Core/Src/lcd.c:173:9:SD_SendCommand	32	static
