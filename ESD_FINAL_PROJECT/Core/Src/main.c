@@ -69,7 +69,7 @@ static void MX_SPI2_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-void process_SD_card( void );
+void process_SD_card( const char *filename );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -114,9 +114,11 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   ILI9341_Init();
-  ILI9341_FillScreen(0x0321);
-  process_SD_card();
-  DrawString(10, 10, "New Screen Content", 0xFFFF, 0x0000,1);
+
+  process_SD_card("tiger.bmp");
+  HAL_Delay(1);
+  process_SD_card("easy.bmp");
+  //DisplayBitmapFromSD("FREQUENCY.bmp");
   // Draw a single character
   // Draw 'A' with double size
 
@@ -508,80 +510,122 @@ int fputc(int ch, FILE *f)
 /* USER CODE BEGIN 4 */
 /* USER CODE BEGIN 4 */
 /* USER CODE END 4 */
-void process_SD_card( void )
-{
-  FATFS       FatFs;                //Fatfs handle
-  FIL         fil;                  //File handle
-  FRESULT     fres;                 //Result after operations
-  char        buf[100];
 
-  do
-  {
-    //Mount the SD Card
-    fres = f_mount(&FatFs, "", 1);    //1=mount now
-    if (fres != FR_OK)
-    {
-      printf("No SD Card found : (%i)\r\n", fres);
-      break;
-    }
-    printf("SD Card Mounted Successfully!!!\r\n");
+void process_SD_card(const char *filename) {
+    FATFS FatFs;             // FatFS handle
+    FIL fil;                 // File handle
+    FRESULT fres;            // Result after operations
 
-    //Read the SD Card Total size and Free Size
-    FATFS *pfs;
-    DWORD fre_clust;
-    uint32_t totalSpace, freeSpace;
+    do {
+        // Mount the SD Card
+        fres = f_mount(&FatFs, "", 1); // 1 = mount now
+        if (fres != FR_OK) {
+            printf("Error: No SD Card found (%i)\r\n", fres);
+            break;
+        }
+        printf("SD Card Mounted Successfully!\r\n");
 
-    f_getfree("", &fre_clust, &pfs);
-    totalSpace = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
-    freeSpace = (uint32_t)(fre_clust * pfs->csize * 0.5);
+        // Open the BMP file
+        fres = f_open(&fil, filename, FA_READ);
+        if (fres != FR_OK) {
+            printf("Error: Failed to open file %s (%i)\r\n", filename, fres);
+            break;
+        }
 
-    printf("TotalSpace : %lu bytes, FreeSpace = %lu bytes\n", totalSpace, freeSpace);
+        printf("File %s opened successfully!\r\n", filename);
 
-    //Open the file
-    fres = f_open(&fil, "EmbeTronicX.txt", FA_WRITE | FA_READ | FA_CREATE_ALWAYS);
-    if(fres != FR_OK)
-    {
-      printf("File creation/open Error : (%i)\r\n", fres);
-      break;
-    }
+        // Read and parse BMP header
+        uint8_t bmpHeader[54];
+        UINT bytesRead;
+        fres = f_read(&fil, bmpHeader, sizeof(bmpHeader), &bytesRead);
+        if (fres != FR_OK || bytesRead != sizeof(bmpHeader)) {
+            printf("Error: Failed to read BMP header\r\n");
+            f_close(&fil);
+            break;
+        }
 
-    printf("Writing data!!!\r\n");
-    //write the data
-    f_puts("Welcome to EmbeTronicX", &fil);
+        // Extract BMP information
+        uint16_t imageWidth = *(uint16_t *)&bmpHeader[18];
+        uint16_t imageHeight = *(uint16_t *)&bmpHeader[22];
+        uint32_t dataOffset = *(uint32_t *)&bmpHeader[10];
+        uint16_t bpp = *(uint16_t *)&bmpHeader[28]; // Bits per pixel
+        printf("Image Info: Width=%d, Height=%d, DataOffset=%lu, BPP=%d\r\n",
+               imageWidth, imageHeight, dataOffset, bpp);
 
-    //close your file
-    f_close(&fil);
+        // Validate BMP format
+        if (bpp != 24 && bpp != 16) { // Check for 24-bit or 16-bit BMP
+            printf("Error: Unsupported BMP format. Only 24-bit and 16-bit supported.\r\n");
+            f_close(&fil);
+            break;
+        }
 
-    //Open the file
-    fres = f_open(&fil, "EmbeTronicX.txt", FA_READ);
-    if(fres != FR_OK)
-    {
-      printf("File opening Error : (%i)\r\n", fres);
-      break;
-    }
+        // Move to pixel data
+        if (f_lseek(&fil, dataOffset) != FR_OK) {
+            printf("Error: Failed to seek to pixel data\r\n");
+            f_close(&fil);
+            break;
+        }
 
-    //read the data
-    f_gets(buf, sizeof(buf), &fil);
+        printf("Starting image rendering...\r\n");
 
-    printf("Read Data : %s\n", buf);
+        uint32_t rowSize = ((imageWidth * (bpp / 8) + 3) & ~3); // Ensure 4-byte alignment
+        uint8_t rowBuffer[rowSize];
+        printf("Calculated Row Size: %lu bytes\n", rowSize);
 
-    //close your file
-    f_close(&fil);
-    printf("Closing File!!!\r\n");
-#if 0
-    //Delete the file.
-    fres = f_unlink(EmbeTronicX.txt);
-    if (fres != FR_OK)
-    {
-      printf("Cannot able to delete the file\n");
-    }
-#endif
-  } while( false );
+        for (uint16_t y = 0; y < imageHeight; y++) {
+            int retries = 3;
+            do {
+                fres = f_read(&fil, rowBuffer, rowSize, &bytesRead);
+                if (fres == FR_OK && bytesRead == rowSize) break;
+                HAL_Delay(5); // Add delay before retrying
+            } while (--retries > 0);
 
-  //We're done, so de-mount the drive
-  f_mount(NULL, "", 0);
-  printf("SD Card Unmounted Successfully!!!\r\n");
+            if (fres != FR_OK || bytesRead < rowSize) {
+                printf("Error: Failed to read row %d, fres=%d, bytesRead=%u\r\n", y, fres, bytesRead);
+                break;
+            }
+
+            if (y == 0) {
+                printf("Success: Row %d read successfully!\r\n", y);
+            }
+
+            // Render each pixel in the row
+            for (uint16_t x = 0; x < imageWidth; x++) {
+                uint16_t color;
+
+                if (bpp == 24) {
+                    // 24-bit RGB (RGB888 -> RGB565)
+                    uint8_t *pixel = &rowBuffer[x * 3];
+                    color = ((pixel[2] & 0xF8) << 8) | // Red
+                            ((pixel[1] & 0xFC) << 3) | // Green
+                            (pixel[0] >> 3);          // Blue
+                } else if (bpp == 16) {
+                    // 16-bit RGB565
+                    uint16_t *pixel = (uint16_t *)&rowBuffer[x * 2];
+                    color = *pixel; // Directly use the RGB565 value
+                }
+
+                // Draw pixel (adjust for bottom-to-top BMP format)
+                ILI9341_DrawPixel(x, imageHeight - 1 - y, color);
+            }
+        }
+
+        printf("Image rendered successfully!\r\n");
+
+        // Close the BMP file
+        f_close(&fil);
+        printf("File %s closed successfully!\r\n", filename);
+
+    } while (false);
+
+    // Unmount the SD card
+    f_mount(NULL, "", 0);
+    printf("SD Card Unmounted Successfully!\r\n");
 }
+
+
+
+
 /* USER CODE END 4 */
 
 /**
