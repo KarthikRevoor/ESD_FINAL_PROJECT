@@ -124,26 +124,56 @@ void ILI9341_Init(void) {
 }
 
 void ILI9341_FillScreen(uint16_t color) {
-    uint8_t high_byte = (color >> 8) & 0xFF; // Extract high byte of RGB565 color
-    uint8_t low_byte = color & 0xFF;        // Extract low byte of RGB565 color
+    // Combine the color bytes to save redundant operations
+    uint8_t buffer[512]; // Buffer to send 256 pixels (512 bytes for RGB565)
+    uint8_t high_byte = color >> 8;
+    uint8_t low_byte = color & 0xFF;
+
+    // Fill the buffer once
+    for (uint16_t i = 0; i < 256; i++) {
+        buffer[i * 2] = high_byte;
+        buffer[i * 2 + 1] = low_byte;
+    }
 
     // Set column address (entire width of the display)
+    uint8_t col_data[4] = {0x00, 0x00, 0x00, 0xEF}; // Start: 0x0000, End: 239
     ILI9341_SendCommand(0x2A); // Column Address Set
-    uint8_t data[4] = {0x00, 0x00, 0x00, 0xEF}; // Start: 0x0000, End: 0x00EF (239 in decimal)
-    ILI9341_SendData(data, 4);
+    ILI9341_SendData(col_data, sizeof(col_data));
 
     // Set page address (entire height of the display)
+    uint8_t page_data[4] = {0x00, 0x00, 0x01, 0x3F}; // Start: 0x0000, End: 319
     ILI9341_SendCommand(0x2B); // Page Address Set
-    data[0] = 0x00; data[1] = 0x00; data[2] = 0x01; data[3] = 0x3F; // Start: 0x0000, End: 0x013F (319 in decimal)
-    ILI9341_SendData(data, 4);
+    ILI9341_SendData(page_data, sizeof(page_data));
 
     // Start memory write
     ILI9341_SendCommand(0x2C); // Memory Write
 
-    // Write color to every pixel
-    for (uint32_t i = 0; i < 240 * 320; i++) { // 240x320 resolution
-        uint8_t color_data[2] = {high_byte, low_byte};
-        ILI9341_SendData(color_data, 2);
+    // Send buffer in chunks
+    uint32_t num_chunks = (240 * 320) / 256; // Total pixels divided by buffer size
+    for (uint32_t i = 0; i < num_chunks; i++) {
+        ILI9341_SendData(buffer, sizeof(buffer));
     }
+}
+
+
+void ILI9341_SetAddressWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+    // Set column address
+    ILI9341_SendCommand(0x2A); // Column Address Set
+    uint8_t columnData[4] = {
+        (x0 >> 8) & 0xFF, x0 & 0xFF, // Start column
+        (x1 >> 8) & 0xFF, x1 & 0xFF  // End column
+    };
+    ILI9341_SendData(columnData, 4);
+
+    // Set row address
+    ILI9341_SendCommand(0x2B); // Page Address Set
+    uint8_t rowData[4] = {
+        (y0 >> 8) & 0xFF, y0 & 0xFF, // Start row
+        (y1 >> 8) & 0xFF, y1 & 0xFF  // End row
+    };
+    ILI9341_SendData(rowData, 4);
+
+    // Prepare for memory write
+    ILI9341_SendCommand(0x2C); // Memory Write
 }
 

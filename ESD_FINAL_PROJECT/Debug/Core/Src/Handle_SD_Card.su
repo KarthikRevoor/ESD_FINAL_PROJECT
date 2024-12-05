@@ -1,0 +1,4 @@
+../Core/Src/Handle_SD_Card.c:6:6:SD_Init	16	static
+../Core/Src/Handle_SD_Card.c:16:6:SD_Deinit	8	static
+../Core/Src/Handle_SD_Card.c:21:6:process_SD_card	4320	dynamic
+../Core/Src/Handle_SD_Card.c:114:6:display_images	8	static

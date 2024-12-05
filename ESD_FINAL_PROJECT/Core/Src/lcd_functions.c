@@ -63,22 +63,6 @@ void DrawString(uint16_t x, uint16_t y, const char *str, uint16_t color, uint16_
     }
 }
 
-void DrawImage(uint16_t x, uint16_t y, const uint16_t *image, uint16_t width, uint16_t height) {
-    // Set the drawing window
-    ILI9341_SendCommand(0x2A); // Column Address Set
-    uint8_t colData[] = {x >> 8, x & 0xFF, (x + width - 1) >> 8, (x + width - 1) & 0xFF};
-    ILI9341_SendData(colData, 4);
-
-    ILI9341_SendCommand(0x2B); // Page Address Set
-    uint8_t rowData[] = {y >> 8, y & 0xFF, (y + height - 1) >> 8, (y + height - 1) & 0xFF};
-    ILI9341_SendData(rowData, 4);
-
-    // Write memory
-    ILI9341_SendCommand(0x2C); // Memory Write
-    ILI9341_SendData((uint8_t *)image, width * height * 2); // Send pixel data
-}
-
-
 
 void ILI9341_FillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color) {
     // Ensure the rectangle lies within the screen boundaries
@@ -111,68 +95,4 @@ void ILI9341_FillRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, u
     for (uint16_t i = 0; i < pixelCount; i++) {
         ILI9341_SendData(colorData, 2);
     }
-}
-
-void DisplayBitmapFromSD(const char *filename) {
-    FIL file;
-    FRESULT result;
-    uint16_t imageWidth, imageHeight;
-    uint32_t dataOffset;
-    uint8_t bmpHeader[54];  // BMP header is 54 bytes
-    uint16_t color;
-
-    // Open the bitmap file
-    result = f_open(&file, filename, FA_READ);
-    if (result != FR_OK) {
-        printf("Error: Failed to open file %s\n", filename);
-        return;
-    }
-
-    // Read the BMP header
-    UINT bytesRead;
-    f_read(&file, bmpHeader, sizeof(bmpHeader), &bytesRead);
-    if (bytesRead != sizeof(bmpHeader)) {
-        printf("Error: Failed to read BMP header from %s\n", filename);
-        f_close(&file);
-        return;
-    }
-
-    // Extract width, height, and pixel data offset
-    imageWidth = *(uint16_t *)&bmpHeader[18];
-    imageHeight = *(uint16_t *)&bmpHeader[22];
-    dataOffset = *(uint32_t *)&bmpHeader[10];
-
-    // Check for valid image dimensions
-    if (imageWidth > ILI9341_WIDTH || imageHeight > ILI9341_HEIGHT) {
-        printf("Error: Image size (%dx%d) exceeds screen dimensions\n", imageWidth, imageHeight);
-        f_close(&file);
-        return;
-    }
-
-    printf("Info: Image size %dx%d, Pixel data offset: %lu\n", imageWidth, imageHeight, dataOffset);
-
-    // Move to the pixel data
-    f_lseek(&file, dataOffset);
-
-    // Read and display the image pixel data
-    for (uint16_t y = 0; y < imageHeight; y++) {
-        for (uint16_t x = 0; x < imageWidth; x++) {
-            uint8_t pixelData[3];  // 24-bit RGB
-            f_read(&file, pixelData, 3, &bytesRead);
-            if (bytesRead != 3) {
-                printf("Error: Failed to read pixel data\n");
-                f_close(&file);
-                return;
-            }
-
-            // Convert RGB888 to RGB565
-            color = ((pixelData[2] & 0xF8) << 8) | ((pixelData[1] & 0xFC) << 3) | (pixelData[0] >> 3);
-
-            // Draw the pixel
-            ILI9341_DrawPixel(x, imageHeight - 1 - y, color); // BMP starts from the bottom-left
-        }
-    }
-
-    printf("Info: Image %s displayed successfully\n", filename);
-    f_close(&file);
 }

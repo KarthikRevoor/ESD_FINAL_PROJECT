@@ -2,4 +2,5 @@
 ../Core/Src/lcd.c:22:6:ILI9341_SendData	16	static
 ../Core/Src/lcd.c:30:6:ILI9341_SendDataByte	16	static
 ../Core/Src/lcd.c:38:6:ILI9341_Init	24	static
-../Core/Src/lcd.c:126:6:ILI9341_FillScreen	32	static
+../Core/Src/lcd.c:126:6:ILI9341_FillScreen	552	static
+../Core/Src/lcd.c:159:6:ILI9341_SetAddressWindow	32	static

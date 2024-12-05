@@ -1,6 +1,4 @@
 ../Core/Src/lcd_functions.c:6:6:ILI9341_DrawPixel	32	static
 ../Core/Src/lcd_functions.c:21:6:DrawChar	40	static
 ../Core/Src/lcd_functions.c:58:6:DrawString	40	static
-../Core/Src/lcd_functions.c:66:6:DrawImage	32	static
-../Core/Src/lcd_functions.c:83:6:ILI9341_FillRect	40	static
-../Core/Src/lcd_functions.c:116:6:DisplayBitmapFromSD	4248	static
+../Core/Src/lcd_functions.c:67:6:ILI9341_FillRect	40	static
