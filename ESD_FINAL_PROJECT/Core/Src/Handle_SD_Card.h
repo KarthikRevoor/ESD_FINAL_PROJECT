@@ -22,5 +22,5 @@ void process_SD_card( const char *filename );
 void display_images(void);
 void SD_Deinit(void);
 void SD_Init(void);
-
+void DrawPokeball(int x, int y);
 #endif /* SRC_HANDLE_SD_CARD_H_ */

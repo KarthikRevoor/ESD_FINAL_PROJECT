@@ -94,20 +94,21 @@ int32_t MPU_read() {
 }
 
     // Function to detect shakes
+// Function to detect shakes
 uint32_t detect_shakes(uint32_t duration, int threshold) {
-        uint32_t start_time = HAL_GetTick();
-        uint32_t shake_count = 0;
+    uint32_t start_time = HAL_GetTick();
+    uint32_t shake_count = 0;
 
-        while ((HAL_GetTick() - start_time) < duration) {
-            int32_t magnitude = MPU_read();
+    while ((HAL_GetTick() - start_time) < duration) {
+        int32_t magnitude = MPU_read(); // Read accelerometer data
 
-            // Check if magnitude exceeds threshold
-            if (magnitude > threshold) {
-                shake_count++;
-            }
-
-            HAL_Delay(10); // Small delay to avoid flooding
+        // Check if magnitude exceeds threshold
+        if (magnitude > threshold) {
+            shake_count++;
         }
 
-        return shake_count;
+        HAL_Delay(10); // Small delay to avoid flooding
     }
+
+    return shake_count;
+}

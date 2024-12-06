@@ -33,7 +33,9 @@ Core/Src/lcd.o: ../Core/Src/lcd.c ../Core/Src/lcd.h \
  ../Core/Inc/main.h ../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h \
  ../Middlewares/Third_Party/FatFs/src/diskio.h \
  ../Middlewares/Third_Party/FatFs/src/ff.h ../FATFS/Target/user_diskio.h \
- ../Core/Src/lcd_functions.h ../Core/Inc/fonts.h ../Core/Src/gfxfont.h
+ ../Core/Src/lcd_functions.h ../Core/Inc/fonts.h ../Core/Src/gfxfont.h \
+ ../Core/Src/Handle_SD_Card.h ../Core/Src/uart_init.h \
+ ../Core/Inc/FATFS_SD.h
 ../Core/Src/lcd.h:
 ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h:
 ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f411xe.h:
@@ -76,3 +78,6 @@ Core/Src/lcd.o: ../Core/Src/lcd.c ../Core/Src/lcd.h \
 ../Core/Src/lcd_functions.h:
 ../Core/Inc/fonts.h:
 ../Core/Src/gfxfont.h:
+../Core/Src/Handle_SD_Card.h:
+../Core/Src/uart_init.h:
+../Core/Inc/FATFS_SD.h:

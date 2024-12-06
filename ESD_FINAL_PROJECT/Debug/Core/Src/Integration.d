@@ -38,7 +38,8 @@ Core/Src/Integration.o: ../Core/Src/Integration.c \
  ../Core/Inc/main.h ../Middlewares/Third_Party/FatFs/src/ff_gen_drv.h \
  ../Middlewares/Third_Party/FatFs/src/diskio.h \
  ../Middlewares/Third_Party/FatFs/src/ff.h ../FATFS/Target/user_diskio.h \
- ../Core/Inc/fonts.h ../Core/Src/gfxfont.h
+ ../Core/Inc/fonts.h ../Core/Src/gfxfont.h ../Core/Src/Handle_SD_Card.h \
+ ../Core/Inc/FATFS_SD.h
 ../Core/Src/integration.h:
 ../Core/Src/DS18b20.h:
 ../Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h:
@@ -89,3 +90,5 @@ Core/Src/Integration.o: ../Core/Src/Integration.c \
 ../FATFS/Target/user_diskio.h:
 ../Core/Inc/fonts.h:
 ../Core/Src/gfxfont.h:
+../Core/Src/Handle_SD_Card.h:
+../Core/Inc/FATFS_SD.h:

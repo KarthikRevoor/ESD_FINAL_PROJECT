@@ -4,4 +4,4 @@
 ../Core/Src/accelerometer.c:32:6:MPU_init	5
 ../Core/Src/accelerometer.c:72:9:read_axis_data	1
 ../Core/Src/accelerometer.c:76:9:MPU_read	2
-../Core/Src/accelerometer.c:97:10:detect_shakes	3
+../Core/Src/accelerometer.c:98:10:detect_shakes	3

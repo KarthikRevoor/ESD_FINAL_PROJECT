@@ -34,8 +34,11 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Middlewares/Third_Party/FatFs/src/diskio.h \
  ../Middlewares/Third_Party/FatFs/src/ff.h ../FATFS/Target/user_diskio.h \
  ../Core/Src/lcd.h ../Core/Src/lcd_functions.h ../Core/Inc/fonts.h \
- ../Core/Src/gfxfont.h ../Core/Src/uart_init.h ../Core/Inc/FATFS_SD.h \
- ../Core/Src/Handle_SD_Card.h
+ ../Core/Src/gfxfont.h ../Core/Src/Handle_SD_Card.h \
+ ../Core/Src/uart_init.h ../Core/Inc/FATFS_SD.h ../Core/Src/integration.h \
+ ../Core/Src/DS18b20.h ../Core/Src/IRSensor.h ../Core/Src/DHT11.h \
+ ../Core/Src/accelerometer.h ../Core/Src/push_button.h \
+ ../Core/Src/Pressure_Sensor.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -78,6 +81,13 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Src/lcd_functions.h:
 ../Core/Inc/fonts.h:
 ../Core/Src/gfxfont.h:
+../Core/Src/Handle_SD_Card.h:
 ../Core/Src/uart_init.h:
 ../Core/Inc/FATFS_SD.h:
-../Core/Src/Handle_SD_Card.h:
+../Core/Src/integration.h:
+../Core/Src/DS18b20.h:
+../Core/Src/IRSensor.h:
+../Core/Src/DHT11.h:
+../Core/Src/accelerometer.h:
+../Core/Src/push_button.h:
+../Core/Src/Pressure_Sensor.h:
