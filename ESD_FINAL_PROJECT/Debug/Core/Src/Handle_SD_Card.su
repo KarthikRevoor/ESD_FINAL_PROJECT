@@ -2,4 +2,3 @@
 ../Core/Src/Handle_SD_Card.c:19:6:SD_Deinit	8	static
 ../Core/Src/Handle_SD_Card.c:24:6:process_SD_card	4336	dynamic
 ../Core/Src/Handle_SD_Card.c:128:6:display_images	8	static
-../Core/Src/Handle_SD_Card.c:157:6:DrawPokeball	32	static

@@ -19,15 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "fatfs.h"
-#include "lcd.h"
-#include <stdio.h>
-#include <string.h>
-#include "uart_init.h"
-#include "FATFS_SD.h"
-#include "stdbool.h"
-#include "lcd_functions.h"
-#include "Handle_SD_Card.h"
+#include "accelerometer.h"
 #include "integration.h"
+#include "IRSensor.h"
+#include "uart_init.h"
+#include "fonts.h"
+#include "lcd.h"
+#include "lcd_functions.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -87,7 +85,7 @@ static void MX_USART2_UART_Init(void);
   */
 int main(void)
 {
-pin_init();
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -117,7 +115,6 @@ pin_init();
   MX_FATFS_Init();
   MX_USART2_UART_Init();
   init_game();
-  process_SD_card("tiger.bmp");
   /* USER CODE BEGIN 2 */
 
   //DisplayBitmapFromSD("FREQUENCY.bmp");
@@ -125,6 +122,7 @@ pin_init();
   // Draw 'A' with double size
 
   /* USER CODE END 2 */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -159,7 +157,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 100;
+  RCC_OscInitStruct.PLL.PLLN = 96;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 8;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)

@@ -1,3 +1,3 @@
-../Core/Src/Integration.c:30:6:init_game	8	static
-../Core/Src/Integration.c:51:13:spawn_pokemon_from_array	120	static
-../Core/Src/Integration.c:63:6:game_state_machine	264	static
+../Core/Src/Integration.c:33:6:init_game	8	static
+../Core/Src/Integration.c:54:13:spawn_pokemon_from_array	120	static
+../Core/Src/Integration.c:66:6:game_state_machine	400	static

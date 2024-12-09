@@ -13,11 +13,6 @@
 ../Core/Src/lcd_functions.c:178:6:update_progress_bar	48	static
 ../Core/Src/lcd_functions.c:184:6:shake_element	48	static
 ../Core/Src/lcd_functions.c:197:6:draw_circle	40	static
-../Core/Src/lcd_functions.c:224:6:circular_expansion	32	static
-../Core/Src/lcd_functions.c:230:6:EncounterAnimation	32	static
-../Core/Src/lcd_functions.c:259:6:FadeEncounterTextNonBlocking	24	static
-../Core/Src/lcd_functions.c:280:6:AnimatePokemonAppearance	40	static
-../Core/Src/lcd_functions.c:297:6:ZoomPokemonAppearance	40	static
-../Core/Src/lcd_functions.c:314:6:FlashScreen	24	static
-../Core/Src/lcd_functions.c:322:6:FadeTransition	24	static
-../Core/Src/lcd_functions.c:329:6:DisplayHeadingWithTransition	32	static
+../Core/Src/lcd_functions.c:224:6:FlashScreen	24	static
+../Core/Src/lcd_functions.c:234:6:DrawRotatedString	32	static
+../Core/Src/lcd_functions.c:242:6:DrawRotatedChar	48	static

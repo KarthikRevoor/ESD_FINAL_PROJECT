@@ -43,9 +43,9 @@ void FadeTransition(uint16_t start_color, uint16_t end_color, int steps);
 void FadeEncounterTextNonBlocking();
 void DisplayHeadingWithTransition();
 
+void DrawRotatedString(int x, int y, const char *text, uint16_t color, uint16_t bgcolor, int size);
 
-
-
+void DrawRotatedChar(int x, int y, char c, uint16_t color, uint16_t bgcolor, int size);
 
 
 extern bool FadeTextComplete;

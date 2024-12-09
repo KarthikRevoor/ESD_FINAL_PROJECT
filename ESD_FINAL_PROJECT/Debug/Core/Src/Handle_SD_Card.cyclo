@@ -2,4 +2,3 @@
 ../Core/Src/Handle_SD_Card.c:19:6:SD_Deinit	1
 ../Core/Src/Handle_SD_Card.c:24:6:process_SD_card	15
 ../Core/Src/Handle_SD_Card.c:128:6:display_images	1
-../Core/Src/Handle_SD_Card.c:157:6:DrawPokeball	3

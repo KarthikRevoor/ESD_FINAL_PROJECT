@@ -1,6 +1,7 @@
 #include "integration.h"
 #include "lcd_functions.h"
 #include "lcd.h"
+#include "stdbool.h"
 typedef enum {
     IDLE,
     SENSOR_READ,
@@ -13,7 +14,9 @@ typedef enum {
 
 // Variables for Game State Machine
 GameState currentState = IDLE;
-
+int pokemon_health_percentage = 100; // Default to 100%
+int previous_damage = 0;
+bool welcome_message_displayed = false;
 int dht11_temperature;
 int dht11_humidity;
 float ds18b20_temperature;
@@ -62,20 +65,53 @@ const char *spawn_pokemon_from_array(const char *pokemon_array[]) {
 
 void game_state_machine() {
     switch (currentState) {
-        case IDLE:
-            //DrawString(10, 10, "Welcome to Pokemon Adventure!", 0xFFFF, 0x0000,2);
-            //DrawString(10, 30, "Wave your hand to start!", 0xFFFF, 0x0000,2);
-            // Wait for IR sensor trigger
-        	ir_triggered=0;
-            if (IR_is_triggered()) {
-                uart_send_string("Pokemon detected! Moving to SENSOR_READ.\n\r");
-                currentState = SENSOR_READ;
-                ILI9341_FillScreen(0x0000);
-            }
-            break;
+    // Add a flag to track whether the welcome message has been displayed
+
+
+    case IDLE:
+        if (!welcome_message_displayed) {
+            // Clear the screen and add a welcome message
+            ILI9341_FillScreen(0x0000); // Clear the screen
+            ILI9341_FillRect(0, 0, 320, 60, 0x001F); // Blue title background
+
+            // Center-align the "Welcome to Pokemon Adventure!" text
+            // Center-align the "Welcome to Pokemon Adventure!" text
+            DrawString(60, 15, "Welcome to", 0xFFFF, 0x001F, 2); // Line 1
+            DrawString(20, 35, "Pokemon Adventure!", 0xFFFF, 0x001F, 2); // Line 2
+
+            // Center-align the "Wave your hand to start!" text
+            DrawString(40, 100, "Wave your hand", 0xFFFF, 0x0000, 2); // Line 1
+            DrawString(70, 120, "to start!", 0xFFFF, 0x0000, 2); // Line 2
+            uart_send_string("Waiting for IR sensor trigger...\n\r");
+
+            HAL_Delay(2000);
+
+            process_SD_card("init3.bmp");
+
+            // Set the flag to true after displaying the message
+            welcome_message_displayed = true;
+        }
+
+        // Wait for IR sensor trigger
+        ir_triggered = 0;
+        if (IR_is_triggered()) {
+            // Transition to SENSOR_READ when IR is triggered
+            uart_send_string("Pokemon detected! Moving to SENSOR_READ.\n\r");
+
+            // Clear the screen for the next state
+            ILI9341_FillScreen(0x0000);
+            currentState = SENSOR_READ;
+
+            // Reset the flag for the next time IDLE is entered
+            welcome_message_displayed = false;
+        }
+        break;
 
         case SENSOR_READ: {
-        	ILI9341_FillRect(10, 30, 100, 50, 0x07E0);
+            ILI9341_FillScreen(0x0000); // Clear the screen before displaying new data
+            ILI9341_FillRect(0, 0, 320, 40, 0x001F); // Blue background for heading
+            DrawString(10, 10, "Sensor Readings", 0xFFFF, 0x001F, 2); // Heading in white text
+
             DHT_DataTypedef DHT_Data;
             DHT_GetData(&DHT_Data); // Read DHT11 data
 
@@ -88,23 +124,46 @@ void game_state_machine() {
 
             // Debug output for humidity and temperature
             char buffer[100];
-            sprintf(buffer, "DHT11 Humidity: %d%%\n\r", dht11_humidity);
-            DrawString(10, 30, buffer, 0xFFFF, 0x0000,1);
-            //uart_send_string(buffer);
+            sprintf(buffer, "Humidity: %d%%", dht11_humidity);
+            uart_send_string(buffer);
+            DrawString(10, 50, buffer, 0xFFFF, 0x0000, 1); // Display humidity on the screen
 
-            sprintf(buffer, "DS18B20 Temperature: %.2f°C\n\r", ds18b20_temperature);
-            DrawString(10, 50, buffer, 0xFFFF, 0x0000,1);
-            //uart_send_string(buffer);
+            sprintf(buffer, "Temperature: %.2f°C", ds18b20_temperature);
+            uart_send_string(buffer);
+            DrawString(10, 70, buffer, 0xFFFF, 0x0000, 1); // Display temperature on the screen
 
-            currentState = CHECK_POKEMON_ENCOUNTER;
+            if (ds18b20_temperature > 25.0) {
+                // Split the reasoning message into two lines
+                DrawString(10, 100, "Reason:", 0xF800, 0x0000, 1); // Display "Reason:" in red
+                DrawString(10, 120, "High temperature -> Fire type.", 0xF800, 0x0000, 1); // Second line for explanation
+                uart_send_string("Reason: High temperature -> Fire type.\n\r");
+            } else if (dht11_humidity > 60) {
+                // Split the reasoning message into two lines
+                DrawString(10, 100, "Reason:", 0x001F, 0x0000, 1); // Display "Reason:" in blue
+                DrawString(10, 120, "High humidity -> Water type.", 0x001F, 0x0000, 1); // Second line for explanation
+                uart_send_string("Reason: High humidity -> Water type.\n\r");
+            } else {
+                // Split the reasoning message into two lines
+                DrawString(10, 100, "Reason:", 0x07E0, 0x0000, 1); // Display "Reason:" in green
+                DrawString(10, 120, "Neutral conditions -> Normal type.", 0x07E0, 0x0000, 1); // Second line for explanation
+                uart_send_string("Reason: Neutral conditions -> Normal type.\n\r");
+            }
+
+            HAL_Delay(2000); // Allow time for the user to view the readings
+            currentState = CHECK_POKEMON_ENCOUNTER; // Move to next state
             break;
         }
+
 
         case CHECK_POKEMON_ENCOUNTER: {
             FlashScreen(3, 50); // Flash to indicate encounter transition
             ILI9341_FillScreen(0x0000);
             ILI9341_FillRect(0, 0, 320, 40, 0x001F); // Blue background for heading
             DrawString(10, 10, "Pokemon Encounter!", 0xFFFF, 0x001F, 2); // White text on blue background
+
+            // Reset health and damage for the new Pokémon
+            pokemon_health_percentage = 100;
+            previous_damage = 0;
 
             // Determine Pokémon to spawn
             const char *pokemon_name = NULL;
@@ -115,21 +174,15 @@ void game_state_machine() {
             } else {
                 pokemon_name = spawn_pokemon_from_array(normal_pokemon);
             }
+            strcpy(current_pokemon, pokemon_name);
 
             // Display the Pokémon name
             char buffer[100];
-
-            // Display "A wild" on the first line
             DrawString(10, 60, "A wild", 0xFFFF, 0x0000, 2); // White text
-
-            // Display the Pokémon name on the second line
             sprintf(buffer, "%s", pokemon_name);
-            DrawString(10, 90, buffer, 0xFFFF, 0x0000, 2); // White text for the Pokémon name
+            DrawString(10, 90, buffer, 0xFFFF, 0x0000, 2); // Pokémon name
+            DrawString(10 + (strlen(buffer) * 12) + 10, 90, "appears!", 0xFFFF, 0x0000, 2); // Adjusted text position
 
-            // Display "appears" on the same line as the Pokémon name
-            DrawString(10 + (strlen(buffer) * 12) + 10, 90, "appears!", 0xFFFF, 0x0000, 2); // Adjust position based on name length
-
-            // Send the Pokémon name via UART for debugging
             uart_send_string("A wild ");
             uart_send_string(buffer);
             uart_send_string(" appears!\n\r");
@@ -168,7 +221,6 @@ void game_state_machine() {
 
 
         case BATTLE: {
-
             uart_send_string("Battle initiated! Shake the board to attack.\n\r");
             DrawString(10, 60, "Shake to attack!", 0x07E0, 0x0000, 2); // Green text, size 2
 
@@ -189,7 +241,7 @@ void game_state_machine() {
 
             const uint32_t duration = 3000; // Duration for shaking (3 seconds)
             const int threshold = 2000;    // Threshold for shake detection
-            const int max_shakes = 70;    // Maximum allowed shakes for 100% health
+            const int max_shakes = 70;     // Maximum allowed shakes for 100% health
             uint32_t start_time = HAL_GetTick();
             uint32_t shake_count = 0;
 
@@ -214,15 +266,24 @@ void game_state_machine() {
             int base_damage = 10;
             int total_damage = shake_count * base_damage;
 
+            // Update `previous_damage`
+            static int previous_damage = 0; // Persistent across calls
+            previous_damage += total_damage;
+
             // Calculate health percentage
             int max_health = max_shakes * base_damage; // Maximum possible damage
-            int health_percentage = 100 - ((total_damage * 100) / max_health); // Remaining health
+            pokemon_health_percentage = 100 - ((previous_damage * 100) / max_health);
+            if (pokemon_health_percentage < 0) {
+                pokemon_health_percentage = 0; // Ensure it doesn't go below 0%
+            }
 
             // Determine health bar color based on health percentage
             uint16_t health_color;
-            if (health_percentage < 40) {
+            if (pokemon_health_percentage <= 0) {
+                health_color = 0xF800; // Red for fainted
+            } else if (pokemon_health_percentage < 40) {
                 health_color = 0xF800; // Red for health < 40%
-            } else if (health_percentage < 75) {
+            } else if (pokemon_health_percentage < 75) {
                 health_color = 0xFFE0; // Yellow for health between 40% and 75%
             } else {
                 health_color = 0x07E0; // Green for health >= 75%
@@ -247,51 +308,79 @@ void game_state_machine() {
             // Display health bar
             DrawString(10, 140, "Health Bar:", 0xFFFF, 0x0000, 2); // White text for health bar
             ILI9341_DrawRect(10, 170, 220, 20, 0xFFFF); // Outline of health bar
-            uint16_t health_bar_width = (health_percentage * 220) / 100; // Scale health bar width
+            uint16_t health_bar_width = (pokemon_health_percentage * 220) / 100; // Scale health bar width
             ILI9341_FillRect(10, 170, health_bar_width, 20, health_color); // Fill health bar
 
             // Display health percentage
-            sprintf(buffer, "Health: %d%%", health_percentage);
+            sprintf(buffer, "Health: %d%%", pokemon_health_percentage);
             DrawString(10, 200, buffer, 0xFFFF, 0x0000, 2); // White text for health percentage
 
-            // Return to action selection
-            uart_send_string("Returning to action selection.\n\r");
-            DrawString(10, 240, "Select Action:", 0x07E0, 0x0000, 1); // Green text
-            DrawString(10, 260, "PC13 - Battle", 0xF800, 0x0000, 2); // Red text for Battle
-            DrawString(10, 280, "PC14 - Capture", 0x07E0, 0x0000, 2); // Green text for Capture
-            Reset_Button_State(); // Reset button state for new selection
-            currentState = SELECT_ACTION; // Return to action selection
+            // Handle fainted Pokemon
+            if (pokemon_health_percentage <= 0) {
+                DrawString(10, 240, "Pokemon fainted!", 0xF800, 0x0000, 2); // Red text
+                uart_send_string("Pokemon fainted! Cannot battle or capture.\n\r");
+                HAL_Delay(3000); // Pause to display message
+                currentState = POST_BATTLE; // Transition to POST_BATTLE state
+            } else {
+                // Return to action selection
+                uart_send_string("Returning to action selection.\n\r");
+                DrawString(10, 240, "Select Action:", 0x07E0, 0x0000, 1); // Green text
+                DrawString(10, 260, "PC13 - Battle", 0xF800, 0x0000, 2); // Red text for Battle
+                DrawString(10, 280, "PC14 - Capture", 0x07E0, 0x0000, 2); // Green text for Capture
+                Reset_Button_State(); // Reset button state for new selection
+                currentState = SELECT_ACTION; // Return to action selection
+            }
             break;
         }
 
 
-        case CAPTURE: {
 
+
+        case CAPTURE: {
             uart_send_string("Capture initiated! Apply pressure to capture the Pokemon.\n\r");
 
-            // Countdown before applying pressure
+            char buffer_line1[50];
+            char buffer_line2[50];
             char buffer[50];
-            DrawString(10, 50, "Press in: ", 0xFFFF, 0x0000, 2); // Static part of the countdown message
+            uint32_t low_threshold, high_threshold;
+
+            if (pokemon_health_percentage > 75) {
+                low_threshold = 500;
+                high_threshold = 700;
+                sprintf(buffer_line1, "The Pokemon is healthy.");
+                sprintf(buffer_line2, "Capturing is tough!");
+            } else if (pokemon_health_percentage > 40) {
+                low_threshold = 300;
+                high_threshold = 600;
+                sprintf(buffer_line1, "The Pokemon is weakening.");
+                sprintf(buffer_line2, "Capturing is easier.");
+            } else {
+                low_threshold = 200;
+                high_threshold = 500;
+                sprintf(buffer_line1, "The Pokemon is very weak.");
+                sprintf(buffer_line2, "Capturing is likely!");
+            }
+
+            // Display the divided lines on the LCD
+            DrawString(10, 70, "Hint:", 0x07E0, 0x0000, 2); // Green text for "Hint:"
+            DrawString(10, 100, buffer_line1, 0xFFFF, 0x0000, 1); // First line of the hint
+            DrawString(10, 120, buffer_line2, 0xFFFF, 0x0000, 1); // Second line of the hint
+
+            // Countdown before applying pressure
             for (int countdown = 3; countdown > 0; countdown--) {
-                // Clear only the number area
-                ILI9341_FillRect(110, 50, 40, 20, 0x0000); // Clear just the area for the countdown number
+                // Clear only the countdown number area
+                ILI9341_FillRect(10, 150, 300, 50, 0x0000); // Clear countdown area
 
-                // Draw the countdown number
-                sprintf(buffer, " %d", countdown);
-                DrawString(110, 50, buffer, 0xFFFF, 0x0000, 2); // White text for the number
-
-                // Debug output
+                // Display the countdown number
                 sprintf(buffer, "Press in: %d", countdown);
-                uart_send_string(buffer);
-                uart_send_string("\n\r");
+                DrawString(10, 150, buffer, 0xFFFF, 0x0000, 2); // White text for countdown
 
                 HAL_Delay(1000); // 1-second delay
             }
 
             // Prompt user to apply pressure
             uart_send_string("Apply pressure now for 2 seconds...\n\r");
-            ILI9341_FillRect(10, 100, 300, 40, 0x0000); // Clear prompt area
-            DrawString(10, 100, "Apply pressure now!", 0xFFFF, 0x0000, 2); // White text
+            DrawString(10, 150, "Apply pressure now!", 0xFFFF, 0x0000, 2); // White text
 
             // Measure pressure over 2 seconds with progress bar
             uint32_t start_time = HAL_GetTick();
@@ -299,7 +388,7 @@ void game_state_machine() {
             uint32_t sample_count = 0;
 
             uint16_t progress_x = 10;
-            uint16_t progress_y = 140;
+            uint16_t progress_y = 200;
             uint16_t progress_width = 300;
             uint16_t progress_height = 20;
             uint16_t progress_color = 0x07E0; // Green
@@ -321,36 +410,33 @@ void game_state_machine() {
             // Calculate average pressure
             uint32_t avg_pressure = total_pressure / sample_count;
 
-            // Clear screen and display results
+            // Display results
             ILI9341_FillScreen(0x0000);
-            ILI9341_FillRect(0, 0, 320, 40, 0x001F); // Blue background for the heading
-            DrawString(10, 10, "Capture Results:", 0xFFFF, 0x001F, 2); // White text on blue background
+            DrawString(10, 10, "Capture Results:", 0xFFFF, 0x001F, 2);
 
-            if (avg_pressure > 200 && avg_pressure < 800) {
-              	sprintf(buffer, "Success!");
-                	DrawString(10, 50, buffer, 0x07E0, 0x0000, 2); // Red text for failure
-
-                	sprintf(buffer, "Pressure: %lu", avg_pressure);
-                	DrawString(10, 120, buffer, 0xFFFF, 0x0000, 2); // White text for average pressure
-                	sprintf(buffer, "Pokemon Captured!");
-                	DrawString(10, 80, buffer, 0x07E0, 0x0000, 2); // Red text for the second line
+            if (avg_pressure > low_threshold && avg_pressure < high_threshold) {
+                // Success message
+                sprintf(buffer, "Success!");
+                DrawString(10, 50, buffer, 0x07E0, 0x0000, 2); // Green text for success
+                sprintf(buffer, "Pokemon captured!");
+                DrawString(10, 80, buffer, 0x07E0, 0x0000, 2); // Green text for second line
+                sprintf(buffer, "Pressure: %lu", avg_pressure);
+                DrawString(10, 120, buffer, 0xFFFF, 0x0000, 2); // White text for pressure value
 
                 HAL_Delay(2000); // Pause for user to view results
-
-                currentState = POST_BATTLE; // Transition to POST_BATTLE state after successful capture
+                currentState = POST_BATTLE; // Transition to POST_BATTLE
             } else {
-            	sprintf(buffer, "Failed!");
-            	DrawString(10, 50, buffer, 0xF800, 0x0000, 2); // Red text for failure
-
-            	sprintf(buffer, "Pressure: %lu", avg_pressure);
-            	DrawString(10, 120, buffer, 0xFFFF, 0x0000, 2); // White text for average pressure
-            	sprintf(buffer, "Pokemon broke out!");
-            	DrawString(10, 80, buffer, 0xF800, 0x0000, 2); // Red text for the second line
-
+                // Failure message
+                sprintf(buffer, "Failed!");
+                DrawString(10, 50, buffer, 0xF800, 0x0000, 2); // Red text for failure
+                sprintf(buffer, "Pokemon broke out!");
+                DrawString(10, 80, buffer, 0xF800, 0x0000, 2); // Red text for second line
+                sprintf(buffer, "Pressure: %lu", avg_pressure);
+                DrawString(10, 120, buffer, 0xFFFF, 0x0000, 2); // White text for pressure value
 
                 HAL_Delay(2000); // Pause for user to view results
 
-                // Transition back to action selection
+                // Return to action selection
                 ILI9341_FillScreen(0x0000); // Clear screen
                 DrawString(10, 30, "Select Action:", 0x07E0, 0x0000, 2); // Green text
                 DrawString(10, 90, "Battle:", 0xF800, 0x0000, 3);   // Red text for Battle
@@ -361,13 +447,55 @@ void game_state_machine() {
             break;
         }
 
+        case POST_BATTLE: {
+            // Clear the screen
+        	ILI9341_FillScreen(0x0000);
+
+        	    if (pokemon_health_percentage <= 0) {
+        	        DrawString(70, 100, "Pokemon", 0xF800, 0x0000, 3); // Display "Fainted" message in red
+        	        DrawString(70, 150, "Fainted!", 0xF800, 0x0000, 3); // Display "Fainted" message in red
+        	        HAL_Delay(3000);
+        	        currentState = IDLE;
+        	    } else {
+
+            // Calculate centered x-coordinates for the text
+            int text_x;
+
+            // Display Pokemon Name
+            text_x = 120 - (strlen(current_pokemon) * 6); // Center Pokémon name horizontally (120 is half of 240 width)
+            DrawString(text_x, 100, current_pokemon, 0xFFFF, 0x0000, 3); // White text for Pokémon name
+
+            // Display "Captured!"
+            const char *captured_message = "Captured!";
+            text_x = 120 - (strlen(captured_message) * 6); // Center "Captured!" horizontally
+            DrawString(text_x, 150, captured_message, 0x07E0, 0x0000, 3); // Green text for "Captured!"
+
+            // Confetti Animation with larger pixels
+            for (int i = 0; i < 30; i++) { // Number of confetti iterations
+                for (int j = 0; j < 10; j++) { // Number of confetti per iteration
+                    int x = rand() % 235; // Random x-coordinate (ensure rectangle fits within screen width)
+                    int y = rand() % 315; // Random y-coordinate (ensure rectangle fits within screen height)
+                    uint16_t color = rand() % 0xFFFF; // Random color
+
+                    // Draw a small rectangle as confetti
+                    ILI9341_FillRect(x, y, 5, 5, color); // Rectangle of size 5x5
+                }
+                HAL_Delay(100); // Small delay to simulate animation
+            }
+            // Wait for 3 seconds to allow user to view the message
+            HAL_Delay(3000);
+
+            // Transition back to IDLE state
+            ILI9341_FillScreen(0x0000); // Clear the screen
+            uart_send_string("Returning to the forest\n\r");
+            currentState = IDLE; // Set the state to IDLE
+            break;
+        }
 
 
-               case POST_BATTLE:
-                   uart_send_string("Pokemon Caught. Returning to the forest.\n\r");
-                   currentState = IDLE;
-                   break;
+
            }
 	}
+}
 
 

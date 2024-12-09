@@ -1,7 +1,5 @@
 #include "Pressure_Sensor.h"
 
-
-
 // Global variables
 volatile uint16_t adcValue = 0; // ADC result
 volatile uint8_t adcConversionComplete = 0; // Flag to indicate conversion complete

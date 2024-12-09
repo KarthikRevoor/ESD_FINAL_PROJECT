@@ -221,124 +221,44 @@ void draw_circle(int x_center, int y_center, int radius, uint16_t color) {
     }
 }
 
-void circular_expansion(int x_center, int y_center, uint16_t start_radius, uint16_t end_radius, uint16_t color) {
-    for (int radius = start_radius; radius <= end_radius; radius++) {
-    	draw_circle(x_center, y_center, radius, color); // Draw circle
-        HAL_Delay(30); // Adjust speed of expansion
-    }
-}
-void EncounterAnimation() {
-    uint16_t center_x = 160; // Center of the screen (X)
-    uint16_t center_y = 120; // Center of the screen (Y)
-
-    // Clear the screen before starting the animation
-    ILI9341_FillScreen(0x0000);
-
-    // Simulate a bright center expanding outward
-    for (int brightness = 0; brightness <= 0xFFFF; brightness += 0x0500) {
-        uint16_t color = brightness & 0xFFFF;
-
-        // Draw horizontal and vertical gradient lines emanating from the center
-        ILI9341_DrawHLine(center_x - brightness / 300, center_x + brightness / 300, center_y, color);
-        ILI9341_DrawVLine(center_x, center_y - brightness / 300, center_y + brightness / 300, color);
-
-        // Draw an expanding filled circle to simulate the glowing center
-        draw_circle(center_x, center_y, brightness / 300, color);
-
-        HAL_Delay(15); // Short delay for smooth animation
-    }
-
-    // Add a white flash effect for the final glow
-    ILI9341_FillScreen(0xFFFF);
-    HAL_Delay(100); // Short white flash
-    ILI9341_FillScreen(0x0000); // Return to black screen
-}
-
- // Flag to track fading completion
-
-void FadeEncounterTextNonBlocking() {
-    static uint16_t brightness = 0x0000; // Start brightness
-    static uint32_t last_update = 0;     // Last update time
-    const uint32_t fade_delay = 50;     // Delay between brightness updates
-
-    if (HAL_GetTick() - last_update >= fade_delay) {
-        last_update = HAL_GetTick();
-
-        // Update brightness
-        ILI9341_FillRect(0, 0, 320, 40, 0x001F); // Blue background
-        DrawString(10, 10, "Pokemon Encounter!", brightness, 0x001F, 3); // Text with dynamic brightness
-
-        brightness += 0x0500; // Increment brightness
-
-        // Check if fading is complete
-        if (brightness >= 0xFFFF) {
-            FadeTextComplete = true; // Mark fading as complete
-        }
-    }
-}
-
-void AnimatePokemonAppearance(const char *pokemon_name) {
-    uint16_t start_x = -320;   // Start off-screen (left side)
-    uint16_t end_x = 10;       // Final position
-    uint16_t y = 60;           // Y-position for the Pokémon name
-    uint16_t step = 10;        // Number of pixels to move per frame
-
-    // Slide the Pokémon name into view
-    for (int x = start_x; x <= end_x; x += step) {
-        ILI9341_FillScreen(0x0000); // Clear the screen for each frame
-        ILI9341_FillRect(0, 0, 320, 40, 0x001F); // Blue background for heading
-        DrawString(10, 10, "Pokemon Encounter!", 0xFFFF, 0x001F, 3); // Heading
-
-        // Draw the Pokémon name at the current X position
-        DrawString(x, y, pokemon_name, 0xFFFF, 0x0000, 2); // White text
-        HAL_Delay(50); // Delay between frames for smooth animation
-    }
-}
-void ZoomPokemonAppearance(const char *pokemon_name) {
-    uint16_t x = 10; // Fixed X-position
-    uint16_t y = 60; // Fixed Y-position
-    uint8_t start_size = 1; // Start with small font size
-    uint8_t end_size = 3;   // End with larger font size
-
-    // Gradually increase font size
-    for (int size = start_size; size <= end_size; size++) {
-        ILI9341_FillScreen(0x0000); // Clear the screen for each frame
-        ILI9341_FillRect(0, 0, 320, 40, 0x001F); // Blue background for heading
-        DrawString(10, 10, "Pokemon Encounter!", 0xFFFF, 0x001F, 3); // Heading
-
-        // Draw the Pokémon name with increasing font size
-        DrawString(x, y, pokemon_name, 0xFFFF, 0x0000, size); // White text
-        HAL_Delay(100); // Delay between frames for smooth animation
-    }
-}
-void FlashScreen(int flashes, int duration) {
-    for (int i = 0; i < flashes; i++) {
+void FlashScreen(int flashes, int duration)
+{
+    for (int i = 0; i < flashes; i++)
+    {
         ILI9341_FillScreen(0xFFFF); // White screen
         HAL_Delay(duration-(duration/2));
         ILI9341_FillScreen(0xF7BE); // Black screen
         HAL_Delay(duration);
     }
 }
-void FadeTransition(uint16_t start_color, uint16_t end_color, int steps) {
-    for (int i = 0; i <= steps; i++) {
-        uint16_t color = start_color + ((end_color - start_color) * i) / steps;
-        ILI9341_FillScreen(color);
-        HAL_Delay(30); // Delay for smooth fade
+void DrawRotatedString(int x, int y, const char *text, uint16_t color, uint16_t bgcolor, int size) {
+    while (*text) {
+        DrawRotatedChar(x, y, *text, color, bgcolor, size);
+        y += size * 8; // Move y-coordinate down for next character
+        text++;
     }
 }
-void DisplayHeadingWithTransition() {
-    // Clear the screen
-    ILI9341_FillScreen(0x0000); // Black background
 
-    // Add a gradient background with fade-in effect
-    for (int intensity = 0; intensity <= 255; intensity += 15) {
-        for (int y = 0; y < 40; y++) {
-            uint16_t color = ((0x001F + (y * 0x0400)) & 0xFFFF) | ((intensity << 8) & 0xFF00);
-            ILI9341_DrawHLine(0, y, 320, color); // Draw horizontal lines with fade
+void DrawRotatedChar(int x, int y, char c, uint16_t color, uint16_t bgcolor, int size) {
+    uint8_t line;
+    for (int8_t i = 0; i < 5; i++) { // 5 columns per character
+        line = font[c * 5 + i];
+        // Reverse the bit order for the current column
+        uint8_t reversed_line = 0;
+        for (int8_t j = 0; j < 8; j++) {
+            if (line & (1 << j)) {
+                reversed_line |= (1 << (7 - j));
+            }
         }
-        HAL_Delay(30); // Delay for smooth fade-in effect
-    }
 
-    // Draw the heading text
-    DrawString(10, 10, "Pokemon Encounter!", 0xFFFF, 0x0000, 3); // White text
+        // Draw the reversed column vertically
+        for (int8_t j = 0; j < 8; j++) { // 8 rows per column
+            if (reversed_line & (1 << j)) { // Now in correct order
+                ILI9341_FillRect(x + j * size, y - i * size, size, size, color); // Adjust coordinates for vertical text
+            } else {
+                ILI9341_FillRect(x + j * size, y - i * size, size, size, bgcolor);
+            }
+        }
+    }
 }
+
