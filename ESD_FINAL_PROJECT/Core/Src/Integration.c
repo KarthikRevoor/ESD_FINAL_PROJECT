@@ -9,7 +9,8 @@ typedef enum {
     SELECT_ACTION,
     BATTLE,
     CAPTURE,
-    POST_BATTLE
+    POST_BATTLE,
+	NEXT
 } GameState;
 
 // Variables for Game State Machine
@@ -21,14 +22,13 @@ int dht11_temperature;
 int dht11_humidity;
 float ds18b20_temperature;
 char current_pokemon[50];
-#define POKEMON_COUNT 10
-const char *fire_pokemon[POKEMON_COUNT] = {"Charmander", "Vulpix", "Growlithe", "Magmar", "Flareon", "Cyndaquil", "Torchic", "Chimchar", "Tepig", "Fennekin"};
-const char *ice_pokemon[POKEMON_COUNT] = {"Articuno", "Jynx", "Lapras", "Delibird", "Swinub", "Sneasel", "Snorunt", "Glalie", "Spheal", "Froslass"};
-const char *normal_pokemon[POKEMON_COUNT] = {"Pidgey", "Rattata", "Meowth", "Eevee", "Sentret", "Togepi", "Zigzagoon", "Bidoof", "Patrat", "Lillipup"};
-const char *water_pokemon[POKEMON_COUNT] = {
-    "Squirtle", "Totodile", "Mudkip", "Piplup", "Froakie",
-    "Vaporeon", "Lapras", "Poliwag", "Wooper", "Marill"
-};
+#define POKEMON_COUNT 3
+const char *fire_pokemon[POKEMON_COUNT] = {"Charizard", "Growlithe", "Magmar"};
+const char *ice_pokemon[POKEMON_COUNT] = {"Articuno", "Jynx", "Lapras"};
+const char *normal_pokemon[POKEMON_COUNT] = {"Chansey", "Fearow", "Pidgeot"};
+const char *water_pokemon[POKEMON_COUNT] = {"Blastoise", "Feraligator", "Empoleon"};
+const char *legendary_pokemon[POKEMON_COUNT] = { "Mewtwo", "Zapdos", "Darkrai"};
+
 
 void init_game(void) {
 	IR_init();
@@ -36,6 +36,7 @@ void init_game(void) {
 
 	//MPU_init();
     Push_Button_Init(); // Initialize push button
+    LED_init();
     Pressure_sensor_Init();
     ADC_Config();
     MPU_init();
@@ -117,11 +118,9 @@ void game_state_machine() {
 
             // Only use humidity from DHT11
             dht11_humidity = (int)DHT_Data.Humidity;
-
+            ds18b20_temperature=(int)DHT_Data.Temperature;
             // Read temperature from DS18B20
             //temp_sensor_check();
-            ds18b20_temperature = temperature;
-
             // Debug output for humidity and temperature
             char buffer[100];
             sprintf(buffer, "Humidity: %d%%", dht11_humidity);
@@ -132,28 +131,37 @@ void game_state_machine() {
             uart_send_string(buffer);
             DrawString(10, 70, buffer, 0xFFFF, 0x0000, 1); // Display temperature on the screen
 
-            if (ds18b20_temperature > 25.0) {
-                // Split the reasoning message into two lines
-                DrawString(10, 100, "Reason:", 0xF800, 0x0000, 1); // Display "Reason:" in red
-                DrawString(10, 120, "High temperature -> Fire type.", 0xF800, 0x0000, 1); // Second line for explanation
-                uart_send_string("Reason: High temperature -> Fire type.\n\r");
-            } else if (dht11_humidity > 60) {
-                // Split the reasoning message into two lines
-                DrawString(10, 100, "Reason:", 0x001F, 0x0000, 1); // Display "Reason:" in blue
-                DrawString(10, 120, "High humidity -> Water type.", 0x001F, 0x0000, 1); // Second line for explanation
-                uart_send_string("Reason: High humidity -> Water type.\n\r");
-            } else {
-                // Split the reasoning message into two lines
-                DrawString(10, 100, "Reason:", 0x07E0, 0x0000, 1); // Display "Reason:" in green
-                DrawString(10, 120, "Neutral conditions -> Normal type.", 0x07E0, 0x0000, 1); // Second line for explanation
-                uart_send_string("Reason: Neutral conditions -> Normal type.\n\r");
+            if (ds18b20_temperature > 27 && dht11_humidity > 65) {
+                    // Spawn Mewtwo due to high temperature and humidity
+                    DrawString(10, 100, "Reason:", 0xF800, 0x0000, 1); // Display "Reason:" in red
+                    DrawString(10, 120, "High temp & humidity -> Legendary spawn.", 0xF800, 0x0000, 1);
+                    uart_send_string("Reason: High temperature & humidity -> Legendary spawn.\n\r");
+                } else if (ds18b20_temperature < 10 && dht11_humidity < 20) {
+                    // Spawn Mewtwo due to low temperature and humidity
+                    DrawString(10, 100, "Reason:", 0xF800, 0x0000, 1);
+                    DrawString(10, 120, "Low temp & humidity -> Legendary spawn.", 0xF800, 0x0000, 1);
+                    uart_send_string("Reason: Low temperature & humidity -> Legendary spawn.\n\r");
+                } else if (ds18b20_temperature > 25.0) {
+                    // High temperature leads to Fire-type Pokémon
+                    DrawString(10, 100, "Reason:", 0xF800, 0x0000, 1);
+                    DrawString(10, 120, "High temperature -> Fire type.", 0xF800, 0x0000, 1);
+                    uart_send_string("Reason: High temperature -> Fire type.\n\r");
+                } else if (dht11_humidity > 60) {
+                    // High humidity leads to Water-type Pokémon
+                    DrawString(10, 100, "Reason:", 0x001F, 0x0000, 1);
+                    DrawString(10, 120, "High humidity -> Water type.", 0x001F, 0x0000, 1);
+                    uart_send_string("Reason: High humidity -> Water type.\n\r");
+                } else {
+                    // Neutral conditions lead to Normal-type Pokémon
+                    DrawString(10, 100, "Reason:", 0x07E0, 0x0000, 1);
+                    DrawString(10, 120, "Neutral conditions -> Normal type.", 0x07E0, 0x0000, 1);
+                    uart_send_string("Reason: Neutral conditions -> Normal type.\n\r");
+                }
+
+                HAL_Delay(2000); // Allow time for the user to view the readings
+                currentState = CHECK_POKEMON_ENCOUNTER; // Move to next state
+                break;
             }
-
-            HAL_Delay(2000); // Allow time for the user to view the readings
-            currentState = CHECK_POKEMON_ENCOUNTER; // Move to next state
-            break;
-        }
-
 
         case CHECK_POKEMON_ENCOUNTER: {
             FlashScreen(3, 50); // Flash to indicate encounter transition
@@ -162,18 +170,28 @@ void game_state_machine() {
             DrawString(10, 10, "Pokemon Encounter!", 0xFFFF, 0x001F, 2); // White text on blue background
 
             // Reset health and damage for the new Pokémon
-            pokemon_health_percentage = 100;
-            previous_damage = 0;
+            pokemon_health_percentage = 100; // Reset health to full
+            previous_damage = 0; // Reset damage
+            reset_health_leds(); // Reset LEDs to default state
+            UpdateLEDs(pokemon_health_percentage); // Update LEDs to reflect new health
 
             // Determine Pokémon to spawn
             const char *pokemon_name = NULL;
-            if (ds18b20_temperature > 25.0) {
+
+            // Check conditions for Mewtwo
+            if ((ds18b20_temperature > 27 && dht11_humidity > 65) ||
+                (ds18b20_temperature < 10 && dht11_humidity < 20)) {
+                pokemon_name = "Mewtwo"; // Special spawn condition for Mewtwo
+            } else if (ds18b20_temperature > 25.0) {
                 pokemon_name = spawn_pokemon_from_array(fire_pokemon);
             } else if (dht11_humidity > 60) {
                 pokemon_name = spawn_pokemon_from_array(water_pokemon);
+            } else if (rand() % 100 == 0) { // Random chance to spawn a legendary Pokémon
+                pokemon_name = spawn_pokemon_from_array(legendary_pokemon);
             } else {
                 pokemon_name = spawn_pokemon_from_array(normal_pokemon);
             }
+
             strcpy(current_pokemon, pokemon_name);
 
             // Display the Pokémon name
@@ -197,6 +215,7 @@ void game_state_machine() {
             currentState = SELECT_ACTION;
             break;
         }
+
         case SELECT_ACTION: {
             // Wait for button press
             if (Get_Battle_Button_State()) { // PC13 for Battle
@@ -267,7 +286,7 @@ void game_state_machine() {
             int total_damage = shake_count * base_damage;
 
             // Update `previous_damage`
-            static int previous_damage = 0; // Persistent across calls
+          // Persistent across calls
             previous_damage += total_damage;
 
             // Calculate health percentage
@@ -276,7 +295,7 @@ void game_state_machine() {
             if (pokemon_health_percentage < 0) {
                 pokemon_health_percentage = 0; // Ensure it doesn't go below 0%
             }
-
+            UpdateLEDs(pokemon_health_percentage);
             // Determine health bar color based on health percentage
             uint16_t health_color;
             if (pokemon_health_percentage <= 0) {
@@ -345,18 +364,18 @@ void game_state_machine() {
             uint32_t low_threshold, high_threshold;
 
             if (pokemon_health_percentage > 75) {
-                low_threshold = 500;
-                high_threshold = 700;
+                low_threshold = 700;
+                high_threshold = 1000;
                 sprintf(buffer_line1, "The Pokemon is healthy.");
                 sprintf(buffer_line2, "Capturing is tough!");
             } else if (pokemon_health_percentage > 40) {
-                low_threshold = 300;
-                high_threshold = 600;
+                low_threshold = 500;
+                high_threshold = 1000;
                 sprintf(buffer_line1, "The Pokemon is weakening.");
                 sprintf(buffer_line2, "Capturing is easier.");
             } else {
                 low_threshold = 200;
-                high_threshold = 500;
+                high_threshold = 1000;
                 sprintf(buffer_line1, "The Pokemon is very weak.");
                 sprintf(buffer_line2, "Capturing is likely!");
             }
@@ -455,20 +474,21 @@ void game_state_machine() {
         	        DrawString(70, 100, "Pokemon", 0xF800, 0x0000, 3); // Display "Fainted" message in red
         	        DrawString(70, 150, "Fainted!", 0xF800, 0x0000, 3); // Display "Fainted" message in red
         	        HAL_Delay(3000);
-        	        currentState = IDLE;
+        	        reset_health_leds();
+        	        currentState = NEXT;
         	    } else {
 
             // Calculate centered x-coordinates for the text
             int text_x;
 
             // Display Pokemon Name
-            text_x = 120 - (strlen(current_pokemon) * 6); // Center Pokémon name horizontally (120 is half of 240 width)
-            DrawString(text_x, 100, current_pokemon, 0xFFFF, 0x0000, 3); // White text for Pokémon name
+            text_x = 60 - (strlen(current_pokemon) * 6); // Center Pokémon name horizontally (120 is half of 240 width)
+            DrawString(text_x, 40, current_pokemon, 0xFFFF, 0x0000, 3); // White text for Pokémon name
 
             // Display "Captured!"
             const char *captured_message = "Captured!";
-            text_x = 120 - (strlen(captured_message) * 6); // Center "Captured!" horizontally
-            DrawString(text_x, 150, captured_message, 0x07E0, 0x0000, 3); // Green text for "Captured!"
+          text_x = 90 - (strlen(captured_message) * 6); // Center "Captured!" horizontally
+            DrawString(text_x, 70, captured_message, 0x07E0, 0x0000, 3); // Green text for "Captured!"
 
             // Confetti Animation with larger pixels
             for (int i = 0; i < 30; i++) { // Number of confetti iterations
@@ -480,18 +500,27 @@ void game_state_machine() {
                     // Draw a small rectangle as confetti
                     ILI9341_FillRect(x, y, 5, 5, color); // Rectangle of size 5x5
                 }
-                HAL_Delay(100); // Small delay to simulate animation
+                HAL_Delay(50); // Small delay to simulate animation
             }
             // Wait for 3 seconds to allow user to view the message
-            HAL_Delay(3000);
+            HAL_Delay(1000);
 
+            ILI9341_FillScreen(0x0000); // Clear the screen
+            DisplayPokemonImage(current_pokemon); // Custom function to display the image of the captured Pokémons
+            HAL_Delay(1500);
             // Transition back to IDLE state
             ILI9341_FillScreen(0x0000); // Clear the screen
             uart_send_string("Returning to the forest\n\r");
-            currentState = IDLE; // Set the state to IDLE
+            currentState = NEXT; // Set the state to IDLE
             break;
         }
-
+        case NEXT:{
+        	process_SD_card("view.bmp");
+        	welcome_message_displayed=true;
+        	reset_health_leds();
+        	currentState = IDLE; // Set the state to IDLE
+        	            break;
+        }
 
 
            }

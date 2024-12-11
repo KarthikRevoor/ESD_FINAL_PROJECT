@@ -1,5 +1,8 @@
 ../Core/Src/push_button.c:10:6:Push_Button_Init	1
-../Core/Src/push_button.c:34:6:EXTI15_10_IRQHandler	3
-../Core/Src/push_button.c:51:9:Get_Battle_Button_State	1
-../Core/Src/push_button.c:55:9:Get_Capture_Button_State	1
-../Core/Src/push_button.c:60:6:Reset_Button_State	1
+../Core/Src/push_button.c:33:6:LED_init	1
+../Core/Src/push_button.c:67:6:UpdateLEDs	3
+../Core/Src/push_button.c:99:6:reset_health_leds	1
+../Core/Src/push_button.c:116:6:EXTI15_10_IRQHandler	3
+../Core/Src/push_button.c:133:9:Get_Battle_Button_State	1
+../Core/Src/push_button.c:137:9:Get_Capture_Button_State	1
+../Core/Src/push_button.c:142:6:Reset_Button_State	1

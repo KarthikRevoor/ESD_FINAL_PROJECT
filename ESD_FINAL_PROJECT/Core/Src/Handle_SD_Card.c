@@ -70,7 +70,7 @@ void process_SD_card(const char *filename) {
         printf("Starting image rendering...\r\n");
 
         uint32_t rowSize = ((imageWidth * (bpp / 8) + 3) & ~3); // Ensure 4-byte alignment
-        uint16_t maxRowsPerBuffer = 128; // Increased rows per buffer
+        uint16_t maxRowsPerBuffer = 64; // Increased rows per buffer
         uint32_t bufferSize = imageWidth * maxRowsPerBuffer * 2; // RGB565 buffer size
         uint8_t rowBuffer[rowSize]; // Buffer for a single row
         uint8_t lineBuffer[bufferSize]; // Buffer for multiple rows
@@ -125,9 +125,11 @@ void process_SD_card(const char *filename) {
 }
 
 // Example usage
-void display_images(void)
+void display_images(const char *name)
 {
-    process_SD_card("tiger.bmp");
-    process_SD_card("easy.bmp");
+	SD_Deinit();
+	SD_Init();
+
+    process_SD_card("name");
 }
 

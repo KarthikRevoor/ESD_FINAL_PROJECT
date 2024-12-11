@@ -47,6 +47,6 @@ void DrawRotatedString(int x, int y, const char *text, uint16_t color, uint16_t 
 
 void DrawRotatedChar(int x, int y, char c, uint16_t color, uint16_t bgcolor, int size);
 
-
+void DisplayPokemonImage(const char *pokemon_name);
 extern bool FadeTextComplete;
 #endif /* SRC_LCD_FUNCTIONS_H_ */

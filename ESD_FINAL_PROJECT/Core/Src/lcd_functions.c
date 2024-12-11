@@ -261,4 +261,47 @@ void DrawRotatedChar(int x, int y, char c, uint16_t color, uint16_t bgcolor, int
         }
     }
 }
+void DisplayPokemonImage(const char *pokemon_name) {
+    char image_file[20]; // Buffer to hold the image filename
 
+    // Check which Pokémon is captured and load the corresponding image
+    if (strcmp(pokemon_name, "Charizard") == 0) {
+        sprintf(image_file, "charizard.bmp");
+    } else if (strcmp(pokemon_name, "Growlithe") == 0) {
+        sprintf(image_file, "grow.bmp");
+    } else if (strcmp(pokemon_name, "Magmar") == 0) {
+        sprintf(image_file, "magmar.bmp");
+    } else if (strcmp(pokemon_name, "Articuno") == 0) {
+        sprintf(image_file, "articuno.bmp");
+    } else if (strcmp(pokemon_name, "Jynx") == 0) {
+        sprintf(image_file, "jynx.bmp");
+    } else if (strcmp(pokemon_name, "Lapras") == 0) {
+        sprintf(image_file, "lapras.bmp");
+    } else if (strcmp(pokemon_name, "Chansey") == 0) {
+        sprintf(image_file, "chansey.bmp");
+    } else if (strcmp(pokemon_name, "Fearow") == 0) {
+        sprintf(image_file, "fearow.bmp");
+    } else if (strcmp(pokemon_name, "Pidgeot") == 0) {
+        sprintf(image_file, "pidgeot.bmp");
+    } else if (strcmp(pokemon_name, "Blastoise") == 0) {
+        sprintf(image_file, "blastoise.bmp");
+    } else if (strcmp(pokemon_name, "Feraligator") == 0) {
+        sprintf(image_file, "fer.bmp");
+    } else if (strcmp(pokemon_name, "Empoleon") == 0) {
+        sprintf(image_file, "emp.bmp");
+    } else if (strcmp(pokemon_name, "Mewtwo") == 0) {
+        sprintf(image_file, "mewtwo.bmp");
+    } else if (strcmp(pokemon_name, "Zapdos") == 0) {
+        sprintf(image_file, "zapdos.bmp");
+    } else if (strcmp(pokemon_name, "Darkrai") == 0) {
+        sprintf(image_file, "darkrai.bmp");
+    } else {
+        sprintf(image_file, "default.bmp"); // Default image if no match
+    }
+    HAL_Delay(100); // Delay to ensure previous display state is cleared
+    ILI9341_FillScreen(0x0000); // Clear the screen before displaying the new image
+
+        // Use the process_SD_card function to display the image
+   process_SD_card(image_file);
+
+}

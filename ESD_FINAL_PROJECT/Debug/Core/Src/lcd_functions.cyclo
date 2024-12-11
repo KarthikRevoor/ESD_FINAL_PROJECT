@@ -16,3 +16,4 @@
 ../Core/Src/lcd_functions.c:224:6:FlashScreen	2
 ../Core/Src/lcd_functions.c:234:6:DrawRotatedString	2
 ../Core/Src/lcd_functions.c:242:6:DrawRotatedChar	6
+../Core/Src/lcd_functions.c:264:6:DisplayPokemonImage	16
